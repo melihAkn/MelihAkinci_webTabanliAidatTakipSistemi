@@ -9,5 +9,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Models {
         public required string Username { get; set; }
         public required string Password { get; set; }
         public required string RoleId { get; set; }
+        public required UserRoles UserRoles { get; set; } // Navigation Property
+
     }
 }

@@ -5,6 +5,7 @@
         public required int ManagerId { get; set; }
         public int MaxAmountOfResidents { get; set; }
         public required string Address { get; set; }
+        public required ApartmentManager ApartmentManager { get; set; } // Navigation Property
 
 
 

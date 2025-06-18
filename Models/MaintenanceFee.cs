@@ -6,6 +6,8 @@
         public required DateTime DueDate { get; set; }
         public bool IsPaid { get; set; } = false;
         public DateTime? PaymentDate { get; set; } = null;
+        public required ApartmentResident ApartmentResident { get; set; } // Navigation Property
+
 
     }
 }
