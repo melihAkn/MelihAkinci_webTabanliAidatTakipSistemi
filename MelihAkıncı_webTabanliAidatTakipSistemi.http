@@ -1,0 +1,6 @@
+@MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
+
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
