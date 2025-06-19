@@ -1,6 +1,29 @@
 @MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
 
-GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/weatherforecast/
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/
 Accept: application/json
+
+###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/login
+Content-Type: application/json
+
+{
+    "username": "melihaeeekinci",
+    "password": "1234sad5678"
+}
+###
+
+POST http://localhost:5263/Home/register
+Content-Type: application/json
+
+{
+  "name": "Melih",
+  "surname": "Akıncı",
+  "phoneNumber": "2112112",
+  "email": "melihkn",
+  "username": "melihaeeekinci",
+  "password": "1234sad5678"
+}
 
 ###
