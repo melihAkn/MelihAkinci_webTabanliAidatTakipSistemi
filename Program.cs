@@ -1,13 +1,40 @@
 ﻿using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using DotNetEnv;
 var builder = WebApplication.CreateBuilder(args);
+
+Env.Load();
+var mysqlConnectionString = Env.GetString("MYSQL_CONNECTION_STRING");
+var jwtSecret = Env.GetString("JWT_KEY");
+var issuer = Env.GetString("JWT_ISSUER");
+var audience = Env.GetString("JWT_AUDIENCE");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        mysqlConnectionString,
+        ServerVersion.AutoDetect(mysqlConnectionString)
     ));
+
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSecret))
+
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
+
 // Add services to the container.
 
 builder.Services.AddControllers();

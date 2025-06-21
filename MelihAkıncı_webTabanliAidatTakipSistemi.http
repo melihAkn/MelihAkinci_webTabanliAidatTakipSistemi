@@ -27,3 +27,12 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/manager/login 
+Content-Type: application/json
+
+{
+  "username" : "melihaeeekinci",
+  "password" : "1234sad5678"
+}
+###

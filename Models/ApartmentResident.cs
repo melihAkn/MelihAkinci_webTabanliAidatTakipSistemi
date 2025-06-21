@@ -10,6 +10,7 @@
         public required string Password { get; set; }
         public required int RoleId { get; set; }
         public required int ApartmentUnitId { get; set; }
+        public Boolean IsFirstLogin { get; set; } = true;
         public required ApartmentUnit ApartmentUnit { get; set; } // Navigation Property
         public required UserRoles UserRoles { get; set; } // Navigation Property
 

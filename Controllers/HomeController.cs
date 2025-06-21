@@ -10,75 +10,30 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
     [Route("[controller]")]
     public class HomeController : Controller {
         private readonly AppDbContext _context;
-        public HomeController(AppDbContext context) {
+        private readonly IConfiguration _configuration;
+
+        public HomeController(IConfiguration configuration, AppDbContext context) {
+            _configuration = configuration;
             _context = context;
         }
+
         [HttpGet]
         public IActionResult Index() {
             // Şimdilik sadece test amaçlı
             return Content("HomeController çalışıyor.");
         }
         // tum kullanıcıların sisteme girş yapabilmesi için
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto) {
-            //bunu context gibi global bir değişken olarak tanımlayabiliriz
-            var service = new PasswordHash();
-            //tum değerlerin doldurulması zorunlu
-            if(string.IsNullOrWhiteSpace(dto.Username) ||
-                string.IsNullOrWhiteSpace(dto.Password)) {
-                return BadRequest("Zorunlu alanlar boş bırakılamaz.");
-            }
-            //apartman yöneticisi giriş işlemleri
-            var apartmentManager = await _context.ApartmentManagers.FirstOrDefaultAsync(apartmentManager => apartmentManager.Username == dto.Username);
-            if(apartmentManager is null) {
-                return BadRequest("Kullanıcı adı veya şifre hatalı");
-            }
-            
-            var verifyHashedPasswordForApartmentManager = service.VerifyPassword(apartmentManager.Password,dto.Password);
-            Console.WriteLine(verifyHashedPasswordForApartmentManager);
-
-            if(apartmentManager != null) {
-                //token işlemleri burada
-
-
-                return Ok("apartman yöneticisi girişi");
-            }
-
-            // apartman sakini giriş işlemleri
-            var apartmentResident = await _context.ApartmentResidents.FirstOrDefaultAsync(apartmentResident => apartmentResident.Username == dto.Username);
-            if(apartmentResident is null) {
-                return BadRequest("Kullanıcı adı veya şifre hatalı");
-            }
-            var verifyHashedPasswordForApartmentResident = service.VerifyPassword(apartmentResident.Password, dto.Password);
-            Console.WriteLine(verifyHashedPasswordForApartmentResident);
-            if(apartmentResident != null) {
-                //token işlemleri burada
-
-
-
-                return Ok("apartman sahibi girişi");
-            }
-            
-       
-            
-
-            return BadRequest("Kullanıcı adı veya şifre hatalı");
-        }
         //sadece apartman yoneticileri sisteme kayıt olabilir
         //kullanıcılar için yonetici o daireye kullanıcı eklediği zaman e posta ile kullanıcı adı ve şifre bilgileri gonderilecek ve ilk giriş yaptığında şifresini ve kullanıcı bilgilerini güncellemesi istenecek
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto) {
-
-
+            
             var role = await _context.UserRoles.FirstOrDefaultAsync(rol => rol.Id == 2);
             if(role is null) {
                 return BadRequest("Rol bulunamadı.");
             }
             
             // mail adresi geçerli mi kontrol etmeliyiz
-
-
-            //kullanıcı adı ve email eşşiz olmalı
 
             //tum değerlerin doldurulması zorunlu
             if(string.IsNullOrWhiteSpace(dto.Name) ||
