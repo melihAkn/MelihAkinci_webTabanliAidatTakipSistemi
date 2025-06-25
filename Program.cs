@@ -1,8 +1,9 @@
-﻿using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
+﻿using DotNetEnv;
+using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using DotNetEnv;
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
@@ -23,6 +24,7 @@ builder.Services.AddAuthentication("Bearer")
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
             ValidIssuer = issuer,
             ValidAudience = audience,
             IssuerSigningKey = new SymmetricSecurityKey(
@@ -50,7 +52,7 @@ if(app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

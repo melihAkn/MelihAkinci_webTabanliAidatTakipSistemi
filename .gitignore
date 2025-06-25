@@ -5,6 +5,8 @@
 
 #custom files
 to-do.md
+projectDescription.md
+
 # dotenv files
 .env
 

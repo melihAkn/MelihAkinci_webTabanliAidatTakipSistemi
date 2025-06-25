@@ -36,3 +36,32 @@ Content-Type: application/json
   "password" : "1234sad5678"
 }
 ###
+PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUyOTE3MTYzLCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.n9J5Rr1FEVmOciAQn5vpSCZ8YGKPxJowaqQOO0oWzjE
+
+{
+  "name": "melih",
+  "surname": "akıncı",
+  "phoneNumber": "1234567890",
+  "email": "denememe123qqqggaö"
+}
+
+  ###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/addApartment
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwNzgwMzU3LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.IpuWDEDbtIV6p_h7j52T8y0sd5L3dLqvyhEsAErOgSo
+
+{
+  "name": "melih",
+  "maxAmountOfResidents": 16,
+  "address" : "dsadsadas",
+  "floorCount": 4,
+  "apartmentUnitCountForEachFloor": 4,
+  "isWantedToAutoFillApartmentUnits" : true
+}
+
+
+
+###

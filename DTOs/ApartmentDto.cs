@@ -1,0 +1,12 @@
+﻿using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
+
+namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
+    public class ApartmentDto {
+        public required string Name { get; set; }
+        public required int MaxAmountOfResidents { get; set; }
+        public required string Address { get; set; }
+        public required int FloorCount { get; set; }
+        public required int ApartmentUnitCountForEachFloor { get; set; }
+        public Boolean IsWantedToAutoFillApartmentUnits { get; set; } = false;
+    }
+}
