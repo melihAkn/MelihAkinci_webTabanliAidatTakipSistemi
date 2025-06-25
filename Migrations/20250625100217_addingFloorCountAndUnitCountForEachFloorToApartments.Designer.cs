@@ -4,6 +4,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250625100217_addingFloorCountAndUnitCountForEachFloorToApartments")]
+    partial class addingFloorCountAndUnitCountForEachFloorToApartments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,9 +177,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
 
                     b.Property<int>("FloorCount")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("MaintenanceFeeAmount")
-                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("ManagerId")
                         .HasColumnType("int");

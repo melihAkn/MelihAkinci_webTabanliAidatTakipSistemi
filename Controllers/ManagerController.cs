@@ -4,6 +4,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.DTOs;
 using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Drawing;
 
@@ -20,28 +21,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
         /*
-         * bilgilerini guncelleyebilme / put
+         * bilgilerini guncelleyebilme / put -------------------------------------------------- done
          * yöneticisi oldugu apartmanları ve o apartman da oturan kat maliklerini gorebilme / get
-         * apartman ekleme / post
-         * apartmana daire ekleme / post
-         * apartman bilgilerini guncelleme / put
-         * apartmana aidat bilgisi ekleyebilmesi ve guncelleyebilmesi / put
+         * apartman ekleme / post -------------------------------------------------- done
+         * apartmana daire ekleme / post -------------------------------------------------- done
+         * apartman bilgilerini guncelleme(aidat dahil) / put -------------------------------------------------- done
+         * 
          * apartmanda ki daireleri göruntuleme ve dairelere kat maliki ataması, kat maliki atandığı zaman kullanıcının mail adresine giriş bilgileri gönderimi / post
-         * istediği daireye özel ek ücret ekleyebilme / post
+         * istediği dairede ki kullanıcıya özel ek ücret ekleyebilme / post
          * gelen ödemeleri goruntuleyebilme / get
          * gelen ödemeleri reddetme ve onaylama ki bu durumda iade işlemi olması gerekir gibi? / post
-         */
-        /*
-         * bugun yapılacak 
-         * dünün planı: bilgilerini guncelleyebilme / put done
-         * apartman ekleme / post
-         * apartmana daire ekleme / post
-         * apartman bilgilerini guncelleme / put
-         * apartmana aidat bilgisi ekleyebilmesi ve guncelleyebilmesi / put
-         * 
-         * 
-         * 
-         * bugunun planı
          */
 
         public IActionResult Index() {
@@ -98,7 +87,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 ManagerId = apartmentManagerId,
                 MaxAmountOfResidents = dto.MaxAmountOfResidents,
                 Address = dto.Address,
-                ApartmentManager = apartmentManager!,
+                MaintenanceFeeAmount = dto.MaintenanceFeeAmount,
+                FloorCount = dto.FloorCount,
+                ApartmentUnitCountForEachFloor = dto.ApartmentUnitCountForEachFloor,
+                ApartmentManager = apartmentManager!
             };
             _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
@@ -108,7 +100,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             // elle girme seçilirse tek tek eklemeleri gerekecek
             // otomatik olursa her kat ve daire sayısına göre otomatik eklenecek
             if(dto.IsWantedToAutoFillApartmentUnits) {
-                List<ApartmentUnit> apartmentUnits = FillAllApartmentUnits(dto.FloorCount, dto.ApartmentUnitCountForEachFloor,apartment);
+                List<ApartmentUnit> apartmentUnits = FillAllApartmentUnits(dto.FloorCount, dto.ApartmentUnitCountForEachFloor, apartment);
                 // async olarak bir fonksiyon ve geriye apartman listesi dönmeli
                 // toplam kat sayısı ve her katta kaç daire oldugu gönderilecek
                 // burada guncelleme işlemi lazım
@@ -119,7 +111,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(returnText);
         }
-        private static List<ApartmentUnit> FillAllApartmentUnits(int floorCount,int unitCount,Apartments apartment) {
+        private static List<ApartmentUnit> FillAllApartmentUnits(int floorCount, int unitCount, Apartments apartment) {
             List<ApartmentUnit> apartmentUnits = new List<ApartmentUnit>();
             // iç içe for dongusu o da bilgileri doldurucak sonra guncelleme işlemi yapacak apartment tablosuna
             for(int i = 1; i <= floorCount; i++) {
@@ -140,15 +132,73 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         }
 
+        [HttpPut("updateApartmentInfos")]
+        //apartman bilgisi guncelleme işlemi
+        public async Task<IActionResult> UpdateApartment([FromBody] ApartmentDto dto) {
+            var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
+            if(apartment == null) {
+                return NotFound("Apartman bulunamadı.");
+            }
+            if(apartment.FloorCount != dto.FloorCount || apartment.ApartmentUnitCountForEachFloor != dto.ApartmentUnitCountForEachFloor) {
+                //eğer kullanıcı kat ve daire sayısını guncellerse önceki verilerin silinip
+                //tekrar eklenmesi
+                await _context.ApartmentUnits
+                .Where(x => x.ApartmentId == apartment.Id)
+                .ExecuteDeleteAsync();
+                List<ApartmentUnit> apartmentUnits = FillAllApartmentUnits(dto.FloorCount, dto.ApartmentUnitCountForEachFloor, apartment);
+                apartment.ApartmentUnits = apartmentUnits;
+                await _context.SaveChangesAsync();
+            }
 
-        //bu fonksiyon olabilir gibi çünkü apartman eklendiği zaman maxamount alanına göre apartman ekleyebiliriz tabi boş olarak sonra da ek rota olarak kullanıcı eklemesi yaparız
+            apartment.Name = dto.Name;
+            apartment.MaxAmountOfResidents = dto.MaxAmountOfResidents;
+            apartment.Address = dto.Address;
+            apartment.MaintenanceFeeAmount = dto.MaintenanceFeeAmount;
+            apartment.FloorCount = dto.FloorCount;
+            apartment.ApartmentUnitCountForEachFloor = dto.ApartmentUnitCountForEachFloor;
+            _context.Apartments.Update(apartment);
+            await _context.SaveChangesAsync();
+            return Ok("Apartman bilgileri güncellendi.");
+        }
+
         // bu tek apartman dairesi ekleme için
+        [HttpPost("addAnApartmentUnit")]
         public async Task<IActionResult> AddApartmentUnit([FromBody] ApartmentUnitDto dto) {
+            // apartman da ki kat sayısı ve daire sayısı kontrol edilip ona göre eklenmeli
+            // o değerleri aşıyorsa eklenmemeli
+            
+            var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
+            if(apartment == null) {
+                return NotFound("Apartman bulunamadı.");
+            }
 
+            if(dto.FloorNumber >= apartment.FloorCount || dto.ApartmentNumber > apartment.ApartmentUnitCountForEachFloor) {
+                return BadRequest("Kat sayısı veya daire sayısı aşıldı.");
+            }
+            var apartmentUnit = new ApartmentUnit {
+                ApartmentId = dto.ApartmentId,
+                FloorNumber = dto.FloorNumber,
+                ApartmentNumber = dto.ApartmentNumber,
+                ApartmentType = dto.ApartmentType,
+                SquareMeters = dto.SquareMeters,
+                Apartments = apartment
+            };
+            _context.ApartmentUnits.Add(apartmentUnit);
+            await _context.SaveChangesAsync();
 
-
-
-            return Ok();
+            return Ok("apartman dairesi başarılı şekilde eklendi");
+        }
+        [HttpPost("updateApartmentUnit")]
+        public async Task<IActionResult> UpdateApartmentUnit([FromBody] ApartmentUnitDto dto) {
+            var apartmentUnit = await _context.ApartmentUnits.FindAsync(dto.ApartmentUnitId);
+            if(apartmentUnit == null) {
+                return NotFound("Daire bulunamadı.");
+            }
+            apartmentUnit.ApartmentType = dto.ApartmentType;
+            apartmentUnit.SquareMeters = dto.SquareMeters;
+            _context.ApartmentUnits.Update(apartmentUnit);
+            await _context.SaveChangesAsync();
+            return Ok("apartman dairesi guncellendi");
         }
 
     }

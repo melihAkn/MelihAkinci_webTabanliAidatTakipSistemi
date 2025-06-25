@@ -51,7 +51,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hc
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/addApartment
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwNzgwMzU3LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.IpuWDEDbtIV6p_h7j52T8y0sd5L3dLqvyhEsAErOgSo
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwODYwMzk5LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.okjW_N06YoRii6AdCwq-nLDEgXZcnQLjwlN75Os9TD8
 
 {
   "name": "melih",
@@ -62,6 +62,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hc
   "isWantedToAutoFillApartmentUnits" : true
 }
 
+
+
+###
+PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateApartmentInfos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwODYwMzk5LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.okjW_N06YoRii6AdCwq-nLDEgXZcnQLjwlN75Os9TD8
+
+{
+  "name": "kaya apartmanı",
+  "apartmentId": 7,
+  "maxAmountOfResidents": 12,
+  "address" : "düzce kaya mah",
+  "floorCount": 8,
+  "apartmentUnitCountForEachFloor": 4
+}
 
 
 ###

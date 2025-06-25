@@ -34,12 +34,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
             modelBuilder.Entity<ApartmentResident>()
                .HasIndex(ApartmentResident => ApartmentResident.Email)
                .IsUnique();
-
-            // apartman daireleri tablosu için unique ayarlamaları
-            modelBuilder.Entity<ApartmentUnit>()
-               .HasIndex(ApartmentUnit => ApartmentUnit.ApartmentNumber)
-               .IsUnique();
-
             //role ilişkilendirmesi
             modelBuilder.Entity<ApartmentManager>()
                .HasOne(ApartmentManager => ApartmentManager.UserRoles)
@@ -52,7 +46,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .WithMany()
                .HasForeignKey(ApartmentResident => ApartmentResident.RoleId)
                .OnDelete(DeleteBehavior.Cascade);
-
+         
             // ApartmentResident ile ApartmentUnit arasındaki ilişkiyi özelleştirme
             modelBuilder.Entity<ApartmentResident>()
                 .HasOne(ApartmentResident => ApartmentResident.ApartmentUnit)
