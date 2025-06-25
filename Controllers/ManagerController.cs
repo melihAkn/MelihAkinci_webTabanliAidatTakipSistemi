@@ -22,11 +22,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         /*
          * bilgilerini guncelleyebilme / put -------------------------------------------------- done
-         * yöneticisi oldugu apartmanları ve o apartman da oturan kat maliklerini gorebilme / get
          * apartman ekleme / post -------------------------------------------------- done
          * apartmana daire ekleme / post -------------------------------------------------- done
          * apartman bilgilerini guncelleme(aidat dahil) / put -------------------------------------------------- done
-         * 
+         * yöneticisi oldugu apartmanları ve o apartman da oturan kat maliklerini gorebilme / get
+
          * apartmanda ki daireleri göruntuleme ve dairelere kat maliki ataması, kat maliki atandığı zaman kullanıcının mail adresine giriş bilgileri gönderimi / post
          * istediği dairede ki kullanıcıya özel ek ücret ekleyebilme / post
          * gelen ödemeleri goruntuleyebilme / get
@@ -139,23 +139,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(apartment == null) {
                 return NotFound("Apartman bulunamadı.");
             }
-            if(apartment.FloorCount != dto.FloorCount || apartment.ApartmentUnitCountForEachFloor != dto.ApartmentUnitCountForEachFloor) {
-                //eğer kullanıcı kat ve daire sayısını guncellerse önceki verilerin silinip
-                //tekrar eklenmesi
-                await _context.ApartmentUnits
-                .Where(x => x.ApartmentId == apartment.Id)
-                .ExecuteDeleteAsync();
-                List<ApartmentUnit> apartmentUnits = FillAllApartmentUnits(dto.FloorCount, dto.ApartmentUnitCountForEachFloor, apartment);
-                apartment.ApartmentUnits = apartmentUnits;
-                await _context.SaveChangesAsync();
-            }
 
             apartment.Name = dto.Name;
             apartment.MaxAmountOfResidents = dto.MaxAmountOfResidents;
             apartment.Address = dto.Address;
             apartment.MaintenanceFeeAmount = dto.MaintenanceFeeAmount;
-            apartment.FloorCount = dto.FloorCount;
-            apartment.ApartmentUnitCountForEachFloor = dto.ApartmentUnitCountForEachFloor;
             _context.Apartments.Update(apartment);
             await _context.SaveChangesAsync();
             return Ok("Apartman bilgileri güncellendi.");
