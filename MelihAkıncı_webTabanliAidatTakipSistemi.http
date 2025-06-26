@@ -1,4 +1,6 @@
 @MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUyOTE3MTYzLCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.n9J5Rr1FEVmOciAQn5vpSCZ8YGKPxJowaqQOO0oWzjE
+
 
 GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/
 Accept: application/json
@@ -38,7 +40,7 @@ Content-Type: application/json
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUyOTE3MTYzLCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.n9J5Rr1FEVmOciAQn5vpSCZ8YGKPxJowaqQOO0oWzjE
+Authorization: Bearer {{token}}
 
 {
   "name": "melih",
@@ -51,10 +53,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hc
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/addApartment
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwODYwMzk5LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.okjW_N06YoRii6AdCwq-nLDEgXZcnQLjwlN75Os9TD8
+Authorization: Bearer {{token}}
 
 {
-  "name": "melih",
+  "name": "meli22121h12",
   "maxAmountOfResidents": 16,
   "address" : "dsadsadas",
   "floorCount": 4,
@@ -67,7 +69,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hc
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateApartmentInfos
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoibWVsaWhhZWVla2luY2kiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBcGFydG1lbnRNYW5hZ2VyIiwiaWQiOiIzIiwiZXhwIjoxNzUwODYwMzk5LCJpc3MiOiJ3ZWJUYWJhbmxpQWlkYXRUYWtpcFNpc3RlbWkiLCJhdWQiOiJVc2VycyJ9.okjW_N06YoRii6AdCwq-nLDEgXZcnQLjwlN75Os9TD8
+Authorization: Bearer {{token}}
 
 {
   "name": "kaya apartmanı",
@@ -76,6 +78,34 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hc
   "address" : "düzce kaya mah",
   "floorCount": 8,
   "apartmentUnitCountForEachFloor": 4
+}
+
+
+###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setApartmentResidentToAnUnit
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "apartmentUnitId": 254,
+  "name": "mehmet",
+  "surName": "kut",
+  "phoneNumber" : "0555454453",
+  "email": "mail adresi"
+}
+
+###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setSpecificDebtToApartmentResident
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "mehmet",
+  "description": "asansor parası",
+  "price" : 2500.99,
+  "residentId": 5
 }
 
 

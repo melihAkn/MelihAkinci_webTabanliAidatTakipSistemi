@@ -4,6 +4,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250625183547_addingIsOccupiedFieldToApartmentUnitsTable1")]
+    partial class addingIsOccupiedFieldToApartmentUnitsTable1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,44 +24,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ApartmentUnitCountForEachFloor")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FloorCount")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("MaintenanceFeeAmount")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<int>("ManagerId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxAmountOfResidents")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ManagerId");
-
-                    b.ToTable("Apartments");
-                });
 
             modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentManager", b =>
                 {
@@ -198,6 +163,44 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                     b.ToTable("ApartmentUnits");
                 });
 
+            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartments", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ApartmentUnitCountForEachFloor")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FloorCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MaintenanceFeeAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxAmountOfResidents")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ManagerId");
+
+                    b.ToTable("Apartments");
+                });
+
             modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.MaintenanceFee", b =>
                 {
                     b.Property<int>("Id")
@@ -291,17 +294,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                         });
                 });
 
-            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartment", b =>
-                {
-                    b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentManager", "ApartmentManager")
-                        .WithMany()
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApartmentManager");
-                });
-
             modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentManager", b =>
                 {
                     b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.UserRoles", "UserRoles")
@@ -334,13 +326,24 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
 
             modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentUnit", b =>
                 {
-                    b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartment", "Apartment")
+                    b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartments", "Apartments")
                         .WithMany("ApartmentUnits")
                         .HasForeignKey("ApartmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Apartment");
+                    b.Navigation("Apartments");
+                });
+
+            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartments", b =>
+                {
+                    b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentManager", "ApartmentManager")
+                        .WithMany()
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApartmentManager");
                 });
 
             modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.MaintenanceFee", b =>
@@ -365,7 +368,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                     b.Navigation("ApartmentResident");
                 });
 
-            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartment", b =>
+            modelBuilder.Entity("MelihAkıncı_webTabanliAidatTakipSistemi.Models.Apartments", b =>
                 {
                     b.Navigation("ApartmentUnits");
                 });

@@ -9,7 +9,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
         public DbSet<ApartmentResident> ApartmentResidents { get; set; }
         public DbSet<ApartmentManager> ApartmentManagers { get; set; }
         public DbSet<UserRoles> UserRoles { get; set; }
-        public DbSet<Apartments> Apartments { get; set; }
+        public DbSet<Apartment> Apartments { get; set; }
 
         public DbSet<ApartmentUnit> ApartmentUnits { get; set; }
 
@@ -55,7 +55,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ApartmentManager ile Apartments arasındaki ilişkiyi özelleştirme
-            modelBuilder.Entity<Apartments>()
+            modelBuilder.Entity<Apartment>()
                .HasOne(Apartments => Apartments.ApartmentManager)
                .WithMany()
                .HasForeignKey(Apartments => Apartments.ManagerId)
@@ -75,7 +75,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
 
             //apartmentUnit ile apartman arasındaki ilişkiyi özelleştirme
             modelBuilder.Entity<ApartmentUnit>()
-               .HasOne(ApartmentUnit => ApartmentUnit.Apartments)
+               .HasOne(ApartmentUnit => ApartmentUnit.Apartment)
                .WithMany(apartment => apartment.ApartmentUnits)
                .HasForeignKey(unit => unit.ApartmentId)
                .OnDelete(DeleteBehavior.Cascade);
