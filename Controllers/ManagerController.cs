@@ -5,6 +5,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Net;
@@ -30,9 +31,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * yöneticisi oldugu apartmanları ve o apartman da oturan kat maliklerini gorebilme / get
          *  dairelere kat maliki ataması, kat maliki atandığı zaman kullanıcının mail adresine giriş bilgileri gönderimi / post -------------------------------------------------- done
          * istediği dairede ki kullanıcıya özel ek ücret ekleyebilme / post -------------------------------------------------- done
-         
+         * apartmanda ki daireleri göruntuleme / get -------------------------------------------------- done
+         * 
          * henuz bitmemiş olanlar         
-         * apartmanda ki daireleri göruntuleme / get
+         * bu ikisi için önce residentController da ki ilgili işlemler yapılmalı
          * gelen ödemeleri goruntuleyebilme / get
          * gelen ödemeleri reddetme ve onaylama ki bu durumda iade işlemi olması gerekir gibi? / post
          */
@@ -40,7 +42,78 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         public IActionResult Index() {
             return Ok("rota çalışıyor");
         }
+        [HttpGet("getApartments")]
+        public async Task<IActionResult> GetApartments() {
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            // select sorugusu sadece yazdığım alanları değil diğer alanları da getirmiş neden?
+            var managerApartments = await _context.Apartments
+            .Where(x => x.ManagerId == apartmentManagerId)
+            .Select(apartment => new ApartmentDto {
+                ApartmentId = apartment.Id,
+                Name = apartment.Name,
+                MaxAmountOfResidents = apartment.MaxAmountOfResidents,
+                Address = apartment.Address,
+                MaintenanceFeeAmount = apartment.MaintenanceFeeAmount,
+                FloorCount = apartment.FloorCount,
+                ApartmentUnitCountForEachFloor = apartment.ApartmentUnitCountForEachFloor
+            })
+            .ToListAsync();
 
+            if(managerApartments.Count == 0) {
+                return NotFound("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
+            }
+            return Ok(managerApartments);
+
+        }
+        // yöneticinin apartmanına ait daireleri ve o dairelerde ki kat maliklerini getirme işlemi
+        [HttpPost("getApartmentsUnits")]
+        public async Task<IActionResult> GetApartmentUnitWithResidentsOrWithout([FromBody] getApartmentUnitsDto dto) {
+            // yöneticinin apartmanına ait kat maliklerini getirme işlemi
+            // burada custom bir list ya da dto lazım gibi çünkü aparmant dairelerini
+            var apartmentUnits = await _context.ApartmentUnits.Where(x => x.ApartmentId == dto.ApartmentId).ToListAsync();
+            List<apartmentUnitsWithResidents> apartmentUnitsWithResidents = new List<apartmentUnitsWithResidents>();
+            // bize ek bilgi gerekeceği için yani koşula göre ek bilgi gerekeceği için
+            // foreach ile her daireyi listeye ekleyeceğiz
+            // verimli bir yaklaşım olmayabilir
+            foreach(var unit in apartmentUnits) {
+                if(unit.IsOccupied) {
+                    var resident = await _context.ApartmentResidents
+                        .Where(x => x.ApartmentUnitId == unit.Id)
+                        .Select(resident => new ApartmentResidentDto {
+                            Id = resident.Id,
+                            Name = resident.Name,
+                            Surname = resident.Surname,
+                            PhoneNumber = resident.PhoneNumber,
+                            Email = resident.Email,
+                            ApartmentUnitId = resident.ApartmentUnitId
+                        })
+                        .ToListAsync();
+                    apartmentUnitsWithResidents.Add(new apartmentUnitsWithResidents {
+                        ApartmentUnitId = unit.Id,
+                        FloorNumber = unit.FloorNumber,
+                        ApartmentNumber = unit.ApartmentNumber,
+                        ApartmentType = unit.ApartmentType,
+                        SquareMeters = unit.SquareMeters,
+                        isHaveResident = unit.IsOccupied,
+                        ApartmentResidents = resident
+                    });
+                }
+                else {
+                    // eğer daire boş ise o daireye ait kat maliki yoktur
+                    // o yüzden isHaveResident false olacak
+                    apartmentUnitsWithResidents.Add(new apartmentUnitsWithResidents {
+                        ApartmentUnitId = unit.Id,
+                        FloorNumber = unit.FloorNumber,
+                        ApartmentNumber = unit.ApartmentNumber,
+                        ApartmentType = unit.ApartmentType,
+                        SquareMeters = unit.SquareMeters,
+                        isHaveResident = unit.IsOccupied
+
+                    });
+                }
+            }
+            return Ok(apartmentUnitsWithResidents);
+        }
 
         [HttpPut("updateManagerInfos")]
         public async Task<IActionResult> UpdateInfos([FromBody] ApartmentManagerDto dto) {
