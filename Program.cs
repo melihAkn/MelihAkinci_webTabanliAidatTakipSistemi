@@ -11,6 +11,9 @@ var mysqlConnectionString = Env.GetString("MYSQL_CONNECTION_STRING");
 var jwtSecret = Env.GetString("JWT_KEY");
 var issuer = Env.GetString("JWT_ISSUER");
 var audience = Env.GetString("JWT_AUDIENCE");
+// add error handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -46,7 +49,8 @@ builder.Services.AddSwaggerGen();
 
 
 var app = builder.Build();
-
+// using exception handler
+app.UseExceptionHandler();
 // Configure the HTTP request pipeline.
 if(app.Environment.IsDevelopment()) {
     app.UseSwagger();

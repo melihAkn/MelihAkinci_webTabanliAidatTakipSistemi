@@ -45,7 +45,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         [HttpGet("getApartments")]
         public async Task<IActionResult> GetApartments() {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            // select sorugusu sadece yazdığım alanları değil diğer alanları da getirmiş neden?
             var managerApartments = await _context.Apartments
             .Where(x => x.ManagerId == apartmentManagerId)
             .Select(apartment => new ApartmentDto {
@@ -55,12 +54,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Address = apartment.Address,
                 MaintenanceFeeAmount = apartment.MaintenanceFeeAmount,
                 FloorCount = apartment.FloorCount,
-                ApartmentUnitCountForEachFloor = apartment.ApartmentUnitCountForEachFloor
+                ApartmentUnitCountForEachFloor = apartment.ApartmentUnitCountForEachFloor,
             })
             .ToListAsync();
-
             if(managerApartments.Count == 0) {
-                return NotFound("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
+                throw new ArgumentException("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
+
+
             }
             return Ok(managerApartments);
 
@@ -94,7 +94,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ApartmentNumber = unit.ApartmentNumber,
                         ApartmentType = unit.ApartmentType,
                         SquareMeters = unit.SquareMeters,
-                        isHaveResident = unit.IsOccupied,
+                        IsHaveResident = unit.IsOccupied,
                         ApartmentResidents = resident
                     });
                 }
@@ -107,7 +107,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ApartmentNumber = unit.ApartmentNumber,
                         ApartmentType = unit.ApartmentType,
                         SquareMeters = unit.SquareMeters,
-                        isHaveResident = unit.IsOccupied
+                        IsHaveResident = unit.IsOccupied
 
                     });
                 }
@@ -123,13 +123,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 string.IsNullOrWhiteSpace(dto.Surname) ||
                 string.IsNullOrWhiteSpace(dto.PhoneNumber) ||
                 string.IsNullOrWhiteSpace(dto.Email)) {
-                return BadRequest("Zorunlu alanlar boş bırakılamaz.");
+                throw new ArgumentException("Zorunlu alanlar boş bırakılamaz.");
             }
-            //token'dan gelen yöneticinin id değeri
+            //apartmentMananagerToken'dan gelen yöneticinin id değeri
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentManager = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
             if(apartmentManager == null) {
-                return NotFound("Apartman yöneticisi bulunamadı.");
+                throw new ArgumentException("Apartman yöneticisi bulunamadı.");
             }
             apartmentManager.Name = dto.Name;
             apartmentManager.Surname = dto.Surname;
@@ -138,25 +138,26 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             //şifre guncellemesi
             if(dto.Password != null && dto.NewPassword != null && dto.NewPasswordAgain != null) {
                 if(dto.NewPassword != dto.NewPasswordAgain) {
-                    return BadRequest("Yeni şifreler eşleşmiyor.");
+                    throw new ArgumentException("Yeni şifreler eşleşmiyor.");
                 }
                 if(!passwordHash.VerifyPassword(apartmentManager.Password, dto.Password)) {
-                    return BadRequest("Eski şifre yanlış.");
+                    throw new ArgumentException("Eski şifre yanlış.");
                 }
                 apartmentManager.Password = passwordHash.HashPassword(dto.NewPassword);
             }
-            await _context.SaveChangesAsync();
-            return Ok("Bilgiler güncellendi.");
+            return Ok(new SuccessResult {
+                Message = "Yönetici bilgileri güncellendi."
+            });
         }
 
         [HttpPost("addApartment")]
         public async Task<IActionResult> AddApartment([FromBody] ApartmentDto dto) {
-            string returnText = "";
+            SuccessResult result = new SuccessResult();
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             // burada password da geliyormuş bunun gelmemesi gerekiyor.
             var apartmentManager = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
             if(apartmentManager == null) {
-                return BadRequest("kullanıcı bulunamadı");
+                throw new ArgumentException("kullanıcı bulunamadı");
             }
             var apartment = new Apartment {
                 Name = dto.Name,
@@ -170,7 +171,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             };
             _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
-            returnText = "apartman başarılı şekilde eklendi. apartman dairelerini elle eklemeniz gerekecek.";
+            result.Message = "apartman başarılı şekilde eklendi. apartman dairelerini elle eklemeniz gerekecek.";
             // apartman eklendikten sonra daire ekleme işlemi eğer seçildiyse
             // apartman daire ekleme hem elle hem otomatik olacak
             // elle girme seçilirse tek tek eklemeleri gerekecek
@@ -182,10 +183,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 // burada guncelleme işlemi lazım
                 apartment.ApartmentUnits = apartmentUnits;
                 await _context.SaveChangesAsync();
-                returnText = "apartman ve  daireler başarılı bir şekilde eklendi.";
+                result.Message = "apartman ve  daireler başarılı bir şekilde eklendi.";
             }
 
-            return Ok(returnText);
+            return Ok(result);
         }
         private static List<ApartmentUnit> FillAllApartmentUnits(int floorCount, int unitCount, Apartment apartment) {
             List<ApartmentUnit> apartmentUnits = new List<ApartmentUnit>();
@@ -213,7 +214,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         public async Task<IActionResult> UpdateApartment([FromBody] ApartmentDto dto) {
             var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
             if(apartment == null) {
-                return NotFound("Apartman bulunamadı.");
+                throw new ArgumentException("Apartman bulunamadı.");
             }
 
             apartment.Name = dto.Name;
@@ -233,11 +234,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
             if(apartment == null) {
-                return NotFound("Apartman bulunamadı.");
+                throw new ArgumentException("Apartman bulunamadı.");
             }
 
             if(dto.FloorNumber >= apartment.FloorCount || dto.ApartmentNumber > apartment.ApartmentUnitCountForEachFloor) {
-                return BadRequest("Kat sayısı veya daire sayısı aşıldı.");
+                throw new ArgumentException("Kat sayısı veya daire sayısı aşıldı.");
             }
             var apartmentUnit = new ApartmentUnit {
                 ApartmentId = dto.ApartmentId,
@@ -250,20 +251,23 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             };
             _context.ApartmentUnits.Add(apartmentUnit);
             await _context.SaveChangesAsync();
-
-            return Ok("apartman dairesi başarılı şekilde eklendi");
+            return Ok(new SuccessResult {
+                Message = "apartman dairesi başarılı şekilde eklendi"
+            });
         }
         [HttpPost("updateApartmentUnit")]
         public async Task<IActionResult> UpdateApartmentUnit([FromBody] ApartmentUnitDto dto) {
             var apartmentUnit = await _context.ApartmentUnits.FindAsync(dto.ApartmentUnitId);
             if(apartmentUnit == null) {
-                return NotFound("Daire bulunamadı.");
+                throw new ArgumentException("Daire bulunamadı.");
             }
             apartmentUnit.ApartmentType = dto.ApartmentType;
             apartmentUnit.SquareMeters = dto.SquareMeters;
             _context.ApartmentUnits.Update(apartmentUnit);
             await _context.SaveChangesAsync();
-            return Ok("apartman dairesi guncellendi");
+            return Ok(new SuccessResult {
+                Message = "apartman dairesi guncellendi"
+            });
         }
 
         [HttpPost("setApartmentResidentToAnUnit")]
@@ -274,10 +278,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             var apartmentUnit = _context.ApartmentUnits.Find(dto.ApartmentUnitId);
             if(apartmentUnit == null) {
-                return NotFound("Daire bulunamadı.");
+                throw new ArgumentException("Daire bulunamadı.");
             }
             if(apartmentUnit.IsOccupied) {
-                return BadRequest("Bu daire zaten dolu.");
+                throw new ArgumentException("Bu daire zaten dolu.");
             }
             // oluşabilecek çakışmaların önüne geçmek için rastgele bir kaç harfle kullanıcı adı oluşturulacak
             // şimdilik sayı ekleyerek oluşturulacak
@@ -288,7 +292,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             var existingResident = _context.ApartmentResidents
                 .FirstOrDefault(resident => resident.Email == dto.Email || resident.Username == createdUsername);
             if(existingResident != null) {
-                return BadRequest("Bu e-posta veya kullanıcı adı zaten kullanılıyor.");
+                throw new ArgumentException("Bu e-posta veya kullanıcı adı zaten kullanılıyor.");
             }
             // apartment resident tablosuna ekleme işlemi
             var apartmentResidentRole = _context.UserRoles.FirstOrDefault(role => role.Role == "ApartmentResident");
@@ -323,14 +327,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 username: createdUsername,
                 password: randomlyCreatedPassword);
             if(!sendEmail) {
-                return BadRequest("E-posta gönderilirken bir hata oluştu. verileri tekrar eklemeniz gerekiyor");
+                throw new ArgumentException("E-posta gönderilirken bir hata oluştu. verileri tekrar eklemeniz gerekiyor");
             }
             // MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentUnit.Apartments.get returned null.
             _context.ApartmentResidents.Add(apartmentResident);
             apartmentUnit.IsOccupied = true;
             _context.ApartmentUnits.Update(apartmentUnit);
             _context.SaveChanges();
-            return Ok("Kat maliki başarılı bir şekilde eklendi.");
+            return Ok(new SuccessResult {
+                Message = "Kat maliki başarılı bir şekilde eklendi."
+            });
         }
         public static string GenerateRandomPassword(int length = 12) {
             const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+[]{}|;:,.<>?";
@@ -344,10 +350,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
         [HttpPost("setSpecificDebtToApartmentResident")]
-        public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] SetResidentSpecificDebtDto dto) {
+        public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificDebtDto dto) {
             var apartmentResident = _context.ApartmentResidents.Find(dto.ResidentId);
             if(apartmentResident == null) {
-                return BadRequest("kat maliki bulunamadı");
+                throw new ArgumentException("kat maliki bulunamadı");
             }
             var residentSpecificDebt = new ResidentsSpecificDebt {
                 Name = dto.Name,// borç adı
@@ -359,11 +365,9 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             _context.ResidentsSpecificDebts.Add(residentSpecificDebt);
             await _context.SaveChangesAsync();
-            return Ok("kat malikine özel borç eklendi");
+            return Ok(new SuccessResult {
+                Message = "kat malikine özel borç eklendi"
+            });
         }
-
-
-
-
     }
 }

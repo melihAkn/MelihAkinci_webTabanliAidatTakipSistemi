@@ -9,6 +9,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
         public decimal MaintenanceFeeAmount { get; set; } = 0.0m;
         public required int FloorCount { get; set; }
         public required int ApartmentUnitCountForEachFloor { get; set; }
-        public Boolean IsWantedToAutoFillApartmentUnits { get; set; } = false;
+        public bool IsWantedToAutoFillApartmentUnits { get; set; } = false;
     }
 }

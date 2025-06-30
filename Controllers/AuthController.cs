@@ -38,14 +38,14 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             var verifyHashedPasswordForApartmentManager = passwordHash.VerifyPassword(apartmentManager.Password, dto.Password);
 
             if(apartmentManager != null && verifyHashedPasswordForApartmentManager == true) {
-                // token'a eklemek için yöneticinin rol bilgisinin çekilmesi
+                // apartmentMananagerToken'a eklemek için yöneticinin rol bilgisinin çekilmesi
                 var apartmanManagerRole = await _context.UserRoles.FirstOrDefaultAsync(role => role.Id == apartmentManager.RoleId);
                 if(apartmanManagerRole is null) {
                     return BadRequest("Rol bulunamadı.");
                 }
 
-                string apartmentManagertoken = GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
-                return Ok(new { token = apartmentManagertoken });
+                string apartmentManagerapartmentMananagerToken = GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
+                return Ok(new { apartmentMananagerToken = apartmentManagerapartmentMananagerToken });
             }
 
             return BadRequest("kullanıcı adı veya şifre hatalı");
@@ -66,20 +66,20 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             var verifyHashedPasswordForApartmentManager = passwordHash.VerifyPassword(apartmentResident.Password, dto.Password);
 
             if(apartmentResident != null && verifyHashedPasswordForApartmentManager == true) {
-                // token'a eklemek için kat malikinin rol bilgisinin çekilmesi
+                // apartmentMananagerToken'a eklemek için kat malikinin rol bilgisinin çekilmesi
                 var apartmentResidentRole = await _context.UserRoles.FirstOrDefaultAsync(role => role.Id == apartmentResident.RoleId);
                 if(apartmentResidentRole is null) {
                     return BadRequest("Rol bulunamadı.");
                 }
                 // async gerekebilir
                 string apartmentResidentToken = GenerateJwtToken(dto.Username, apartmentResidentRole.Role, apartmentResident.Id);
-                return Ok(new { token = apartmentResidentToken });
+                return Ok(new { apartmentMananagerToken = apartmentResidentToken });
             }
             return BadRequest("kullanıcı adı veya şifre hatalı");
         }
 
         private static string GenerateJwtToken(string username, string role, int id) {
-            // tokenin sahip olacağı ve kontrol için eklenen değerler
+            // apartmentMananagerTokenin sahip olacağı ve kontrol için eklenen değerler
             var claims = new[]
               {
                     new Claim(ClaimTypes.Name, username),
@@ -95,7 +95,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
+            var apartmentMananagerToken = new JwtSecurityToken(
                 issuer: jwtIssuer,
                 audience: jwtAudience,
                 claims: claims,
@@ -103,7 +103,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 signingCredentials: credentials
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(apartmentMananagerToken);
         }
     }
 }

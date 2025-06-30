@@ -1,6 +1,5 @@
 @MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
-@token = 
-
+@apartmentMananagerToken = 
 GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/
 Accept: application/json
 
@@ -39,7 +38,7 @@ Content-Type: application/json
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "name": "melih",
@@ -52,7 +51,7 @@ Authorization: Bearer {{token}}
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/addApartment
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "name": "meli22121h12",
@@ -68,7 +67,7 @@ Authorization: Bearer {{token}}
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateApartmentInfos
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "name": "kaya apartmanı",
@@ -86,7 +85,7 @@ Authorization: Bearer {{token}}
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setApartmentResidentToAnUnit
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "apartmentUnitId": 254,
@@ -100,7 +99,7 @@ Authorization: Bearer {{token}}
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setSpecificDebtToApartmentResident
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "name": "mehmet",
@@ -116,18 +115,101 @@ Authorization: Bearer {{token}}
 ###
 
 GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getApartments
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 
 ###
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getApartmentsUnits
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{apartmentMananagerToken}}
 
 {
-  "apartmentId": 13
+  "apartmentId": 1
 
 }
 
 ###
+
+
+
+// -------------------------------------------------- Apartment Resident routes ------------------------------------------
+@apartmentResidentToken = 
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/resident/login 
+Content-Type: application/json
+
+{
+  "username" : "mehmet.kut8752",
+  "password" : ""
+}
+###
+
+
+
+PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/updateResidentInfos
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
+
+{
+  "name": "mehmet",
+  "surname": "kurt",
+  "phoneNumber": "1234567890",
+  "email": "" 
+
+}
+###
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/myApartmentUnit
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
+
+{
+ 
+
+}
+###
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/myApartmentUnitPayments
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
+
+{
+
+}
+
+
+
+###
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/myApartmentUnitSpecialFees
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
+
+{
+
+}
+
+
+ ###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

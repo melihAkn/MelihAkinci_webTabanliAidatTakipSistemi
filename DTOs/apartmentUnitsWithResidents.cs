@@ -5,7 +5,7 @@
         public required int ApartmentNumber { get; set; }
         public required string ApartmentType { get; set; }
         public required int SquareMeters { get; set; }
-        public required bool isHaveResident { get; set; } = false;
+        public required bool IsHaveResident { get; set; } = false;
         public List<ApartmentResidentDto> ApartmentResidents { get; set; } = new();
     }
 }
