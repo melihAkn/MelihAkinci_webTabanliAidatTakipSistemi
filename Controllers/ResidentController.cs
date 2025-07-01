@@ -5,6 +5,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
@@ -24,8 +25,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * aidat bilgilerini / get ---------------- done
          * özel ücretlerini gorebilme / get ---------------- done
          * 
-         * aidat ödeyebilme  / post
-         * özel ücretini ödeyebilme / post
+         * aidat ödeyebilme  / post ---------------- done
+         * özel ücretini ödeyebilme / post ---------------- done
          * yapmış olduğu ödemeleri ve durumlarını(red, onay vb.) goruntuleme / get
          * dekont yükleme ödeme yaptıktan sonra ödemeler panelin de dekont yükle butonu olmalı / post 
         */
@@ -101,5 +102,39 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
             return Ok(apartmentResidentSpecialFees);
         }
+        [HttpPost("payMyMaintenanceFee")]
+        public async Task<IActionResult> PayMyApartmentUnitMaintenanceFee([FromBody] PayMaintenanceFeeOrSpecialFeeDto dto) {
+            var myMaintenancefee = await _context.MaintenanceFees.Where(mf => mf.IsPaid == false && mf.Id == dto.MaintenanceFeeId).FirstOrDefaultAsync();
+            if(myMaintenancefee != null) {
+                throw new ArgumentException("Ödenmemiş aidat bulunamadı.");
+            }
+            myMaintenancefee!.IsPaid = true;
+            myMaintenancefee!.PaymentDate = DateTime.UtcNow;
+            _context.MaintenanceFees.Update(myMaintenancefee);
+            await _context.SaveChangesAsync();
+            return Ok(new SuccessResult {
+                Message = "aidat başarılı bir şekilde ödendi"
+            });
+        }
+        [HttpPost("payMySpecialFee")]
+        public async Task<IActionResult> PayMyApartmentUnitSpecialFee([FromBody] PayMaintenanceFeeOrSpecialFeeDto dto) {
+            var mySpecialFee = await _context.ResidentsSpecificDebts.Where(mf => mf.IsPaid == false && mf.Id == dto.SpecialFeeId).FirstOrDefaultAsync();
+            if(mySpecialFee != null) {
+                throw new ArgumentException("Ödenmemiş özel ücret bulunamadı.");
+            }
+            mySpecialFee!.IsPaid = true;
+            mySpecialFee!.PaymentDate = DateTime.UtcNow;
+            _context.ResidentsSpecificDebts.Update(mySpecialFee);
+            await _context.SaveChangesAsync();
+
+            return Ok(new SuccessResult {
+                Message = "aidat başarılı bir şekilde ödendi"
+            });
+        }
+
+
+
+
+
     }
 }

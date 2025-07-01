@@ -271,12 +271,15 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
         [HttpPost("setApartmentResidentToAnUnit")]
-        public IActionResult SetApartmentResidentToAnUnit([FromBody] setResidentToApartmentUnitDto dto) {
+        public async Task<IActionResult> SetApartmentResidentToAnUnit([FromBody] setResidentToApartmentUnitDto dto) {
             // apartment resident tablosuna ekleme işlemi
             // apartment unit tablosuna da ekleme işlemi
             // apartment unit tablosunda ki isOccupied değerini true yapma işlemi
 
-            var apartmentUnit = _context.ApartmentUnits.Find(dto.ApartmentUnitId);
+            var apartmentUnit = await _context.ApartmentUnits
+                .Include(p => p.Apartment)
+                .FirstOrDefaultAsync(p => p.Id == dto.ApartmentUnitId);
+
             if(apartmentUnit == null) {
                 throw new ArgumentException("Daire bulunamadı.");
             }
@@ -311,11 +314,20 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 UserRoles = apartmentResidentRole!,
                 ApartmentUnit = apartmentUnit
             };
+            _context.ApartmentResidents.Add(apartmentResident);
 
-            // include diye birşey buldum
-            _context.ApartmentUnits
-            .Include(p => p.Apartment);
-            //
+            // burada şuan ki aydan sonraki ayı alarak ve ayın 28'ini dueDate(son ödeme tarihi) olarak atamalıyız
+            // veritabanında ki tarih formatı yıl ay gün
+            
+
+            var apartmentMaintenanceFee = new MaintenanceFee {
+                ResidentId = apartmentResident.Id,
+                Amount = apartmentUnit.Apartment.MaintenanceFeeAmount,
+                DueDate = GetNextMonth28thDay(), // bir sonraki ayın 28'i son ödeme tarihi
+                IsPaid = false,
+                ApartmentResident = apartmentResident
+            };
+            _context.MaintenanceFees.Add(apartmentMaintenanceFee);
             // veri eklendikten sonra mail adresine giriş bilgileri gönderilecek
             var apartmentManager = _context.ApartmentManagers.Find(int.Parse(User.FindFirst("id")?.Value ?? "0"));
             var emailAction = new EmailActions();
@@ -330,13 +342,23 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 throw new ArgumentException("E-posta gönderilirken bir hata oluştu. verileri tekrar eklemeniz gerekiyor");
             }
             // MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentUnit.Apartments.get returned null.
-            _context.ApartmentResidents.Add(apartmentResident);
+
             apartmentUnit.IsOccupied = true;
             _context.ApartmentUnits.Update(apartmentUnit);
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
             return Ok(new SuccessResult {
                 Message = "Kat maliki başarılı bir şekilde eklendi."
             });
+        }
+        public static DateTime GetNextMonth28thDay() {
+            // verilen tarihin bir sonraki ayının 28. ci gününü döndürür
+            int year = DateTime.UtcNow.Year;
+            int month = DateTime.UtcNow.AddMonths(1).Month;
+            int day = 28;
+            DateTime date = new DateTime(year, month, day);
+            string fullTime = date.ToString("yyyy/MM/dd");
+            return DateTime.Parse(fullTime);
         }
         public static string GenerateRandomPassword(int length = 12) {
             const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+[]{}|;:,.<>?";
@@ -355,11 +377,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(apartmentResident == null) {
                 throw new ArgumentException("kat maliki bulunamadı");
             }
+
             var residentSpecificDebt = new ResidentsSpecificDebt {
                 Name = dto.Name,// borç adı
                 Description = dto.Description,
                 Price = dto.Price,
                 ResidentId = apartmentResident!.Id,
+                DueDate = GetNextMonth28thDay(),
                 ApartmentResident = apartmentResident!
             };
 
