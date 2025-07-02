@@ -1,8 +1,5 @@
 @MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
 @apartmentMananagerToken = 
-GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/
-Accept: application/json
-
 ###
 
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/login
@@ -131,10 +128,40 @@ Authorization: Bearer {{apartmentMananagerToken}}
 
 ###
 
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setMaintenanceFeeToAllResidents
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
 
+{
+  "apartmentId": 13
 
+}
+
+###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getAllPaidMaintenanceFees
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "apartmentId": 13
+
+}
+
+###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getAllPaidSpecialFees
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "apartmentId": 13
+
+}
+###
 // -------------------------------------------------- Apartment Resident routes ------------------------------------------
 @apartmentResidentToken = 
+
 ###
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/resident/login 
 Content-Type: application/json
@@ -168,7 +195,7 @@ Authorization: Bearer {{apartmentResidentToken}}
 
 }
 ###
-GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/myApartmentUnitPayments
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/myApartmentUnitMaintenanceFees
 Content-Type: application/json
 Authorization: Bearer {{apartmentResidentToken}}
 
@@ -187,12 +214,25 @@ Authorization: Bearer {{apartmentResidentToken}}
 
 }
 
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/payMyMaintenanceFee
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
 
- ###
+{
+  "maintenanceFeeId" : 4
 
+}
 
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/payMySpecialFee
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
 
+{
+  "specialFeeId" : 2
 
+}
 
 
 

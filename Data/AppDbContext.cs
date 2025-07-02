@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
-    public class AppDbContext : DbContext {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options) {
         public DbSet<ApartmentResident> ApartmentResidents { get; set; }
         public DbSet<ApartmentManager> ApartmentManagers { get; set; }
         public DbSet<UserRoles> UserRoles { get; set; }
@@ -46,7 +44,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .WithMany()
                .HasForeignKey(ApartmentResident => ApartmentResident.RoleId)
                .OnDelete(DeleteBehavior.Cascade);
-         
+
             // ApartmentResident ile ApartmentUnit arasındaki ilişkiyi özelleştirme
             modelBuilder.Entity<ApartmentResident>()
                 .HasOne(ApartmentResident => ApartmentResident.ApartmentUnit)
@@ -79,6 +77,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .WithMany(apartment => apartment.ApartmentUnits)
                .HasForeignKey(unit => unit.ApartmentId)
                .OnDelete(DeleteBehavior.Cascade);
+
+            // maintenanceFee için enum dönüştürmesi
+            modelBuilder.Entity<MaintenanceFee>()
+               .Property(x => x.Status)
+               .HasConversion<string>();
+
+            // specificdebt için enum dönüştürmesi
+            modelBuilder.Entity<ResidentsSpecificDebt>()
+               .Property(x => x.Status)
+               .HasConversion<string>();
 
             base.OnModelCreating(modelBuilder);
 

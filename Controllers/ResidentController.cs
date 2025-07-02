@@ -12,13 +12,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
     [Authorize(Roles = "ApartmentResident")]
     [ApiController]
     [Route("[controller]")]
-    public class ResidentController : Controller {
+    public class ResidentController(AppDbContext context) : Controller {
 
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _context = context;
         private readonly PasswordHash passwordHash = new PasswordHash();
-        public ResidentController(AppDbContext context) {
-            _context = context;
-        }
+
         /*
          * bilgilerini guncelleyebilme / put --------------------------------------- done
          * kendi dairesini gorebilme / get --------------------------------------- done
@@ -27,7 +25,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * 
          * aidat ödeyebilme  / post ---------------- done
          * özel ücretini ödeyebilme / post ---------------- done
-         * yapmış olduğu ödemeleri ve durumlarını(red, onay vb.) goruntuleme / get
+         * yapmış olduğu ödemeleri ve durumlarını(red, beklemede, onay vb.) görüntüleme / get
          * dekont yükleme ödeme yaptıktan sonra ödemeler panelin de dekont yükle butonu olmalı / post 
         */
 
@@ -81,36 +79,62 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(residentApartmentUnit);
 
         }
-        [HttpGet("myApartmentUnitPayments")]
+        [HttpGet("myApartmentUnitMaintenanceFees")]
+        //tum apartman iadatlarını getirir burada da sayfalama gerekiyor
         public async Task<IActionResult> GetMyApartmentUnitPayments() {
+            List<GetMyApartmentUnitPaymentsDto> myMaintenanceFees = new List<GetMyApartmentUnitPaymentsDto>();
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentResidentMaintenanceFees = await _context.MaintenanceFees
                 .Where(mf => mf.ApartmentResident.Id == apartmentResidentId)
                 .ToListAsync();
             if(apartmentResidentMaintenanceFees == null) {
-                throw new ArgumentException("Apartman sakini bulunamadı.");
+                throw new ArgumentException("herhangi bir aidat bilgisi bulunamadı.");
             }
-            return Ok(apartmentResidentMaintenanceFees);
+            foreach(var mf in apartmentResidentMaintenanceFees) {
+                myMaintenanceFees.Add(new GetMyApartmentUnitPaymentsDto {
+                    Id = mf.Id,
+                    Amount = mf.Amount,
+                    DueDate = mf.DueDate,
+                    IsPaid = mf.IsPaid,
+                    PaymentDate = mf.PaymentDate,
+                    Status = mf.Status
+                });
+            }
+            
+            return Ok(myMaintenanceFees);
         }
 
         [HttpGet("myApartmentUnitSpecialFees")]
         public async Task<IActionResult> GetMyApartmentUnitSpecialFees() {
+            List<GetMyApartmentUnitSpecialFeesDto> mySpecialFees = new List<GetMyApartmentUnitSpecialFeesDto>();
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentResidentSpecialFees = await _context.ResidentsSpecificDebts.Where(a => a.ResidentId == apartmentResidentId).ToListAsync();
             if(apartmentResidentSpecialFees == null) {
-                throw new ArgumentException("Apartman sakini bulunamadı.");
+                throw new ArgumentException("herhangi bir özel ücret bulunamadı.");
             }
-            return Ok(apartmentResidentSpecialFees);
+            foreach(var spf in apartmentResidentSpecialFees) {
+                mySpecialFees.Add(new GetMyApartmentUnitSpecialFeesDto {
+                    Id = spf.Id,
+                    Name = spf.Name,
+                    Description = spf.Description,
+                    Amount = spf.Price,
+                    CreatedAt = spf.CreatedAt,
+                    PaymentDate = spf.PaymentDate,
+                    DueDate = spf.DueDate,
+                    IsPaid = spf.IsPaid,
+                    Status = spf.Status
+                });
+            }
+            return Ok(mySpecialFees);
         }
         [HttpPost("payMyMaintenanceFee")]
         public async Task<IActionResult> PayMyApartmentUnitMaintenanceFee([FromBody] PayMaintenanceFeeOrSpecialFeeDto dto) {
             var myMaintenancefee = await _context.MaintenanceFees.Where(mf => mf.IsPaid == false && mf.Id == dto.MaintenanceFeeId).FirstOrDefaultAsync();
-            if(myMaintenancefee != null) {
+            if(myMaintenancefee == null) {
                 throw new ArgumentException("Ödenmemiş aidat bulunamadı.");
             }
             myMaintenancefee!.IsPaid = true;
             myMaintenancefee!.PaymentDate = DateTime.UtcNow;
-            _context.MaintenanceFees.Update(myMaintenancefee);
             await _context.SaveChangesAsync();
             return Ok(new SuccessResult {
                 Message = "aidat başarılı bir şekilde ödendi"
@@ -119,16 +143,15 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         [HttpPost("payMySpecialFee")]
         public async Task<IActionResult> PayMyApartmentUnitSpecialFee([FromBody] PayMaintenanceFeeOrSpecialFeeDto dto) {
             var mySpecialFee = await _context.ResidentsSpecificDebts.Where(mf => mf.IsPaid == false && mf.Id == dto.SpecialFeeId).FirstOrDefaultAsync();
-            if(mySpecialFee != null) {
+            if(mySpecialFee == null) {
                 throw new ArgumentException("Ödenmemiş özel ücret bulunamadı.");
             }
             mySpecialFee!.IsPaid = true;
             mySpecialFee!.PaymentDate = DateTime.UtcNow;
-            _context.ResidentsSpecificDebts.Update(mySpecialFee);
             await _context.SaveChangesAsync();
 
             return Ok(new SuccessResult {
-                Message = "aidat başarılı bir şekilde ödendi"
+                Message = "özel ücret başarılı bir şekilde ödendi"
             });
         }
 

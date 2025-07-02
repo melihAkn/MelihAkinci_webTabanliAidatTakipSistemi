@@ -16,12 +16,9 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
     [Authorize(Roles = "ApartmentManager")]
     [ApiController]
     [Route("[controller]")]
-    public class ManagerController : Controller {
-        private readonly AppDbContext _context;
+    public class ManagerController(AppDbContext context) : Controller {
+        private readonly AppDbContext _context = context;
         private readonly PasswordHash passwordHash = new PasswordHash();
-        public ManagerController(AppDbContext context) {
-            _context = context;
-        }
 
         /*
          * bilgilerini guncelleyebilme / put -------------------------------------------------- done
@@ -63,11 +60,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             }
             return Ok(managerApartments);
-
         }
         // yöneticinin apartmanına ait daireleri ve o dairelerde ki kat maliklerini getirme işlemi
         [HttpPost("getApartmentsUnits")]
-        public async Task<IActionResult> GetApartmentUnitWithResidentsOrWithout([FromBody] getApartmentUnitsDto dto) {
+        public async Task<IActionResult> GetApartmentUnitWithResidentsOrWithout([FromBody] ApartmentIdDto dto) {
             // yöneticinin apartmanına ait kat maliklerini getirme işlemi
             // burada custom bir list ya da dto lazım gibi çünkü aparmant dairelerini
             var apartmentUnits = await _context.ApartmentUnits.Where(x => x.ApartmentId == dto.ApartmentId).ToListAsync();
@@ -316,9 +312,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             };
             _context.ApartmentResidents.Add(apartmentResident);
 
-            // burada şuan ki aydan sonraki ayı alarak ve ayın 28'ini dueDate(son ödeme tarihi) olarak atamalıyız
-            // veritabanında ki tarih formatı yıl ay gün
-            
+
+
 
             var apartmentMaintenanceFee = new MaintenanceFee {
                 ResidentId = apartmentResident.Id,
@@ -371,6 +366,49 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         }
 
+        // apartmanın tamamına aidat ekleme yani toplu aidat ekleme
+        // birde bunun aylık olarak otomatik yapılması lazım ama birden fazla olmaması için veritabanında isMaintenanceFeeAdded gibi bir alan eklenebilir
+        // ama onun da her ay yeniden false yapılması lazım
+        [HttpPost("setMaintenanceFeeToAllResidents")]
+        public async Task<IActionResult> SetMaintenanceFeeToApartment([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait aidat ekleme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
+            if(apartment == null) {
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
+            }
+            // her kat maliki için aidat eklenmeli
+            var apartmentResidents = await _context.ApartmentResidents
+                .Include(x => x.ApartmentUnit)
+                .Where(x => x.ApartmentUnit!.ApartmentId == dto.ApartmentId)
+                .ToListAsync();
+            if(apartmentResidents.Count == 0) {
+                throw new ArgumentException("Bu apartmanda kat maliki bulunamadı.");
+            }
+            // maintenancefee ye aktif oluduğu ayı eklesek ve ona göre kontrol etsek şyle 2025/08 şeklinde ya da direk olarak 08 o da yıllar arasında sıkıntı yaratır
+            // ya da apartman'a kat maliklerine aidat eklendi mi gibi bir alan ekleyebiliriz ama bunu her ay false olarak ayarlamamız gerekir
+
+            foreach(var resident in apartmentResidents) {
+                var findApartmentResidentMaintenanceFee = await _context.MaintenanceFees.Where(x => x.ResidentId == resident.Id && x.DueDate == GetNextMonth28thDay()).FirstOrDefaultAsync();
+                // eğer veritabanında birdaha ki ayın 28 ini içeren kayıt yoksa yeni aidat kaydı yapılır tum kat maliklerine
+                if(findApartmentResidentMaintenanceFee == null) {
+                    var maintenanceFee = new MaintenanceFee {
+                        ResidentId = resident.Id,
+                        Amount = apartment.MaintenanceFeeAmount,
+                        DueDate = GetNextMonth28thDay(), // bir sonraki ayın 28'i son ödeme tarihi
+                        IsPaid = false,
+                        Status = PaymentStatusEnum.PaymentStatus.Beklemede,
+                        ApartmentResident = resident
+                    };
+                    _context.MaintenanceFees.Add(maintenanceFee);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok(new SuccessResult {
+                Message = "aidatlar başarılı bir şekilde eklendi"
+            });
+        }
+
         [HttpPost("setSpecificDebtToApartmentResident")]
         public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificDebtDto dto) {
             var apartmentResident = _context.ApartmentResidents.Find(dto.ResidentId);
@@ -393,5 +431,82 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "kat malikine özel borç eklendi"
             });
         }
+        [HttpPost("getAllPaidMaintenanceFees")]
+        public async Task<IActionResult> GetAllPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartments = await _context.Apartments.FindAsync(dto.ApartmentId);
+            if(apartments == null) {
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
+            }
+            var getPaidMantenanceFees = await _context.MaintenanceFees
+                .Include(x => x.ApartmentResident)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Select(fee => new MaintenanceFeeDto {
+                    Amount = fee.Amount,
+                    DueDate = fee.DueDate,
+                    IsPaid = fee.IsPaid,
+                    PaymentDate = fee.PaymentDate,
+                    ResidentName = fee.ApartmentResident!.Name,
+                    ResidentSurname = fee.ApartmentResident!.Surname,
+                    Status = fee.Status
+                })
+                .ToListAsync();
+
+            return Ok(getPaidMantenanceFees);
+        }
+        [HttpPost("getAllPaidSpecialFees")]
+        public async Task<IActionResult> GetAllPaidSpecificFees([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartments = await _context.Apartments.FindAsync(dto.ApartmentId);
+            if(apartments == null) {
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
+            }
+            var getPaidMantenanceFees = await _context.ResidentsSpecificDebts
+                .Include(x => x.ApartmentResident)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Select(fee => new ResidentSpecificDebtDto {
+                    Name = fee.Name,
+                    Description = fee.Description,
+                    Price = fee.Price,
+                    DueDate = fee.DueDate,
+                    IsPaid = fee.IsPaid,
+                    PaymentDate = fee.PaymentDate,
+                    ResidentName = fee.ApartmentResident!.Name,
+                    ResidentSurname = fee.ApartmentResident!.Surname,
+                    Status = fee.Status
+                })
+                .ToListAsync();
+
+            return Ok(getPaidMantenanceFees);
+
+
+        }
+
+        [HttpPost("allowOrDenyMaintenanceFeePayment")]
+        public async Task<IActionResult> AllowOrDenyMaintenanceFeePayment([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            
+
+            return Ok("");
+
+
+        }
+
+
+        [HttpPost("allowOrDenySpecificFeePayment")]
+        public async Task<IActionResult> AllowOrDenySpecificFeePayment([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            
+           
+
+            return Ok("");
+
+
+        }
+
     }
 }
