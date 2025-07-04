@@ -12,7 +12,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
         public DbSet<ApartmentUnit> ApartmentUnits { get; set; }
 
         public DbSet<MaintenanceFee> MaintenanceFees { get; set; }
-        public DbSet<ResidentsSpecificDebt> ResidentsSpecificDebts { get; set; }
+        public DbSet<ResidentsSpecificFee> ResidentsSpecificFees { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             //apartman yönetici tablosu için unique ayarlamaları
@@ -66,7 +66,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .HasForeignKey(MaintenanceFee => MaintenanceFee.ResidentId)
                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ResidentsSpecificDebt>()
+            modelBuilder.Entity<ResidentsSpecificFee>()
                .HasOne(ResidentsSpecificDebt => ResidentsSpecificDebt.ApartmentResident)
                .WithMany()
                .HasForeignKey(ResidentsSpecificDebt => ResidentsSpecificDebt.ResidentId);
@@ -84,7 +84,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .HasConversion<string>();
 
             // specificdebt için enum dönüştürmesi
-            modelBuilder.Entity<ResidentsSpecificDebt>()
+            modelBuilder.Entity<ResidentsSpecificFee>()
                .Property(x => x.Status)
                .HasConversion<string>();
 

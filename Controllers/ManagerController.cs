@@ -30,10 +30,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * istediği dairede ki kullanıcıya özel ek ücret ekleyebilme / post -------------------------------------------------- done
          * apartmanda ki daireleri göruntuleme / get -------------------------------------------------- done
          * 
-         * henuz bitmemiş olanlar         
-         * bu ikisi için önce residentController da ki ilgili işlemler yapılmalı
-         * gelen ödemeleri goruntuleyebilme / get
-         * gelen ödemeleri reddetme ve onaylama ki bu durumda iade işlemi olması gerekir gibi? / post
+         * gelen ödemeleri goruntuleyebilme / get -------------------------------------------------- done
+         * gelen ödemeleri reddetme ve onaylama / post -------------------------------------------------- done
          */
 
         public IActionResult Index() {
@@ -410,22 +408,22 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
         [HttpPost("setSpecificDebtToApartmentResident")]
-        public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificDebtDto dto) {
+        public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificFeeDto dto) {
             var apartmentResident = _context.ApartmentResidents.Find(dto.ResidentId);
             if(apartmentResident == null) {
                 throw new ArgumentException("kat maliki bulunamadı");
             }
 
-            var residentSpecificDebt = new ResidentsSpecificDebt {
+            var residentSpecificFee = new ResidentsSpecificFee {
                 Name = dto.Name,// borç adı
                 Description = dto.Description,
-                Price = dto.Price,
+                Amount = dto.Amount,
                 ResidentId = apartmentResident!.Id,
                 DueDate = GetNextMonth28thDay(),
                 ApartmentResident = apartmentResident!
             };
 
-            _context.ResidentsSpecificDebts.Add(residentSpecificDebt);
+            _context.ResidentsSpecificFees.Add(residentSpecificFee);
             await _context.SaveChangesAsync();
             return Ok(new SuccessResult {
                 Message = "kat malikine özel borç eklendi"
@@ -443,6 +441,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 .Include(x => x.ApartmentResident)
                 .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
                 .Select(fee => new MaintenanceFeeDto {
+                    Id = fee.Id,
                     Amount = fee.Amount,
                     DueDate = fee.DueDate,
                     IsPaid = fee.IsPaid,
@@ -463,13 +462,14 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(apartments == null) {
                 throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
             }
-            var getPaidMantenanceFees = await _context.ResidentsSpecificDebts
+            var getPaidMantenanceFees = await _context.ResidentsSpecificFees
                 .Include(x => x.ApartmentResident)
                 .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
-                .Select(fee => new ResidentSpecificDebtDto {
+                .Select(fee => new ResidentSpecificFeeDto {
+                    Id = fee.Id,
                     Name = fee.Name,
                     Description = fee.Description,
-                    Price = fee.Price,
+                    Amount = fee.Amount,
                     DueDate = fee.DueDate,
                     IsPaid = fee.IsPaid,
                     PaymentDate = fee.PaymentDate,
@@ -480,30 +480,75 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 .ToListAsync();
 
             return Ok(getPaidMantenanceFees);
+        }
+
+        [HttpPost("allowMaintenanceFeePayment")]
+        public async Task<IActionResult> AllowMaintenanceFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var maintenanceFees = await _context.MaintenanceFees.FindAsync(dto.MaintenanceFeeId);
+            if(maintenanceFees == null) {
+                throw new ArgumentException("aidat bulunamadı");
+            }
+            maintenanceFees.Status = PaymentStatusEnum.PaymentStatus.Onaylandi;
+            await _context.SaveChangesAsync();
+
+            return Ok(new SuccessResult {
+                Message = "aidat ödemesi başarılı bir şekilde onaylandı"
+            });
+
+
+        }
+        [HttpPost("DenyMaintenanceFeePayment")]
+        public async Task<IActionResult> DenyMaintenanceFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var maintenanceFees = await _context.MaintenanceFees.FindAsync(dto.MaintenanceFeeId);
+            if(maintenanceFees == null) {
+                throw new ArgumentException("aidat bulunamadı");
+            }
+            maintenanceFees.Status = PaymentStatusEnum.PaymentStatus.Reddedildi;
+            await _context.SaveChangesAsync();
+
+            return Ok(new SuccessResult {
+                Message = "aidat ödemesi başarılı bir şekilde reddedildi"
+            });
 
 
         }
 
-        [HttpPost("allowOrDenyMaintenanceFeePayment")]
-        public async Task<IActionResult> AllowOrDenyMaintenanceFeePayment([FromBody] ApartmentIdDto dto) {
+
+        [HttpPost("allowSpecificFeePayment")]
+        public async Task<IActionResult> AllowSpecificFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
             // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            
+            var specificFees = await _context.ResidentsSpecificFees.FindAsync(dto.SpecialFeeId);
+            if(specificFees == null) {
+                throw new ArgumentException("özel ücret bulunamadı");
+            }
+            specificFees.Status = PaymentStatusEnum.PaymentStatus.Onaylandi;
+            await _context.SaveChangesAsync();
 
-            return Ok("");
+            return Ok(new SuccessResult {
+                Message = "özel ücret ödemesi başarılı bir şekilde onaylandı"
+            });
 
 
         }
-
-
-        [HttpPost("allowOrDenySpecificFeePayment")]
-        public async Task<IActionResult> AllowOrDenySpecificFeePayment([FromBody] ApartmentIdDto dto) {
+        [HttpPost("DenySpecificFeePayment")]
+        public async Task<IActionResult> DenySpecificFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
             // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            
-           
+            var specificFees = await _context.ResidentsSpecificFees.FindAsync(dto.SpecialFeeId);
+            if(specificFees == null) {
+                throw new ArgumentException("özel ücret bulunamadı");
+            }
+            specificFees.Status = PaymentStatusEnum.PaymentStatus.Reddedildi;
+            await _context.SaveChangesAsync();
 
-            return Ok("");
+            return Ok(new SuccessResult {
+                Message = "özel ücret ödemesi başarılı bir şekilde reddedildi"
+            });
 
 
         }

@@ -159,6 +159,47 @@ Authorization: Bearer {{apartmentMananagerToken}}
 
 }
 ###
+
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/allowMaintenanceFeePayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "maintenanceFeeId": 4
+
+}
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/DenyMaintenanceFeePayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "specialFeeId": 2
+
+}
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/allowSpecificFeePayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "maintenanceFeeId": 4
+
+}
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/DenySpecificFeePayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "specialFeeId": 2
+
+}
+
+
+
+
+###
 // -------------------------------------------------- Apartment Resident routes ------------------------------------------
 @apartmentResidentToken = 
 
