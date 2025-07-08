@@ -10,7 +10,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
         public string? Password { get; set; }
         public string? NewPassword { get; set; }
         public string? NewPasswordAgain { get; set; }
-
-        public required int RoleId = 2;
+        public int RoleId { get; set; } = 2;
     }
 }

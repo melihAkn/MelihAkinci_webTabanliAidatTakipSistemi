@@ -12,7 +12,6 @@ using System.Net;
 using System.Net.Mail;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
-
     [Authorize(Roles = "ApartmentManager")]
     [ApiController]
     [Route("[controller]")]
@@ -36,6 +35,23 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         public IActionResult Index() {
             return Ok("rota çalışıyor");
+        }
+
+        [HttpGet("GetUserRoleId")]
+        public IActionResult GetUserRoleId() {
+            // yöneticinin bilgilerini getirme işlemi
+            var token = Request.Cookies["accessToken"];
+            Console.WriteLine(token);
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartmentManager = _context.ApartmentManagers.Find(apartmentManagerId);
+            Console.WriteLine(apartmentManagerId);
+            if(apartmentManager == null) {
+                throw new ArgumentException("apartman yöneticisi bulunamadı");
+            }
+            // yöneticinin rol bilgisini de döndürmek lazım ki frontend de yöneticinin rolüne göre yönlendirme yapabilsin
+            return Ok(new returnRoleIdforNavigationsDto {
+                RoleId = apartmentManager.RoleId
+            });
         }
         [HttpGet("getApartments")]
         public async Task<IActionResult> GetApartments() {
@@ -195,7 +211,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ApartmentType = "2+1",
                         SquareMeters = 90,
                         IsOccupied = false,
-                        Apartment = apartment
+                        Apartment = apartment,
                     });
                 }
             }

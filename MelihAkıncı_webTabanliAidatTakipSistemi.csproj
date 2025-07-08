@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Frontend\src\components\" />
+    <Folder Include="Frontend\src\pages\" />
     <Folder Include="Views\" />
   </ItemGroup>
 

@@ -28,11 +28,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             //tum değerlerin doldurulması zorunlu
             if(string.IsNullOrWhiteSpace(dto.Username) ||
                 string.IsNullOrWhiteSpace(dto.Password)) {
-                return BadRequest("Zorunlu alanlar boş bırakılamaz.");
+                throw new ArgumentException("Zorunlu alanlar boş bırakılamaz.");
             }
             var apartmentManager = await _context.ApartmentManagers.FirstOrDefaultAsync(apartmentManager => apartmentManager.Username == dto.Username);
             if(apartmentManager is null) {
-                return BadRequest("Kullanıcı adı veya şifre hatalı");
+                throw new ArgumentException("Kullanıcı adı veya şifre hatalı");
             }
 
             var verifyHashedPasswordForApartmentManager = passwordHash.VerifyPassword(apartmentManager.Password, dto.Password);
@@ -41,14 +41,22 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 // apartmentMananagerToken'a eklemek için yöneticinin rol bilgisinin çekilmesi
                 var apartmanManagerRole = await _context.UserRoles.FirstOrDefaultAsync(role => role.Id == apartmentManager.RoleId);
                 if(apartmanManagerRole is null) {
-                    return BadRequest("Rol bulunamadı.");
+                    throw new ArgumentException("Rol bulunamadı.");
                 }
 
                 string apartmentManagerapartmentMananagerToken = GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
-                return Ok(new { apartmentMananagerToken = apartmentManagerapartmentMananagerToken });
-            }
+                Response.Cookies.Append("accessToken", apartmentManagerapartmentMananagerToken, new CookieOptions {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                });
 
-            return BadRequest("kullanıcı adı veya şifre hatalı");
+                //return Ok(new { apartmentMananagerToken = apartmentManagerapartmentMananagerToken });
+            }
+            return Ok(new SuccessResult {
+                Message = "giriş başarılı"
+            });
         }
 
         [HttpPost("resident/login")]
@@ -56,11 +64,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             //tum değerlerin doldurulması zorunlu
             if(string.IsNullOrWhiteSpace(dto.Username) ||
                 string.IsNullOrWhiteSpace(dto.Password)) {
-                return BadRequest("Zorunlu alanlar boş bırakılamaz.");
+                throw new ArgumentException("Zorunlu alanlar boş bırakılamaz.");
             }
             var apartmentResident = await _context.ApartmentResidents.FirstOrDefaultAsync(apartmentResident => apartmentResident.Username == dto.Username);
             if(apartmentResident is null) {
-                return BadRequest("Kullanıcı adı veya şifre hatalı");
+                throw new ArgumentException("Kullanıcı adı veya şifre hatalı");
             }
 
             var verifyHashedPasswordForApartmentManager = passwordHash.VerifyPassword(apartmentResident.Password, dto.Password);
@@ -69,13 +77,24 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 // apartmentMananagerToken'a eklemek için kat malikinin rol bilgisinin çekilmesi
                 var apartmentResidentRole = await _context.UserRoles.FirstOrDefaultAsync(role => role.Id == apartmentResident.RoleId);
                 if(apartmentResidentRole is null) {
-                    return BadRequest("Rol bulunamadı.");
+                    throw new ArgumentException("Rol bulunamadı.");
                 }
-                // async gerekebilir
+
                 string apartmentResidentToken = GenerateJwtToken(dto.Username, apartmentResidentRole.Role, apartmentResident.Id);
-                return Ok(new { apartmentMananagerToken = apartmentResidentToken });
+                Response.Cookies.Append("accessToken", apartmentResidentToken, new CookieOptions {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax
+                });
+
+
+                // async gerekebilir
+
+                //return Ok(new { apartmentMananagerToken = apartmentResidentToken });
             }
-            return BadRequest("kullanıcı adı veya şifre hatalı");
+            return Ok(new SuccessResult {
+                Message = "giriş başarılı"
+            });
         }
 
         private static string GenerateJwtToken(string username, string role, int id) {
@@ -101,6 +120,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(jwtExpiresInMinutes),//240.0
                 signingCredentials: credentials
+
             );
 
             return new JwtSecurityTokenHandler().WriteToken(apartmentMananagerToken);

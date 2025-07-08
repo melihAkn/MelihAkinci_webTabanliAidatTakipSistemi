@@ -2,6 +2,11 @@
 @apartmentMananagerToken = 
 ###
 
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/GetUserRoleId
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+###
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/Home/login
 Content-Type: application/json
 

@@ -2,7 +2,9 @@
 using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         ServerVersion.AutoDetect(mysqlConnectionString)
     ));
 
+
+// CORS ayarları
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+/*
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options => {
         options.TokenValidationParameters = new TokenValidationParameters {
@@ -31,9 +45,40 @@ builder.Services.AddAuthentication("Bearer")
             ValidateLifetime = true,
             ValidIssuer = issuer,
             ValidAudience = audience,
+            RoleClaimType = ClaimTypes.Role,
             IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSecret))
+        };
+    });
 
+*/
+
+builder.Services.AddAuthentication("Bearer")
+
+    .AddJwtBearer("Bearer", options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            RoleClaimType = ClaimTypes.Role
+        };
+
+
+        options.Events = new JwtBearerEvents {
+            OnMessageReceived = context => {
+                // Eğer header'dan geldiyse al
+                var token = context.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+
+                // Eğer header yoksa, cookie'den al
+                if(string.IsNullOrEmpty(token)) {
+                    token = context.Request.Cookies["accessToken"];
+                }
+
+                context.Token = token;
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -64,6 +109,8 @@ if(app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
