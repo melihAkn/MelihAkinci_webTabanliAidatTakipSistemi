@@ -37,22 +37,42 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok("rota çalışıyor");
         }
 
-        [HttpGet("GetUserRoleId")]
-        public IActionResult GetUserRoleId() {
+        [HttpGet("GetUserRole")]
+        public IActionResult GetUserRole() {
             // yöneticinin bilgilerini getirme işlemi
             var token = Request.Cookies["accessToken"];
             Console.WriteLine(token);
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var apartmentManager = _context.ApartmentManagers.Find(apartmentManagerId);
+            var apartmentManager = _context.ApartmentManagers
+                .Include(e => e.UserRoles)
+                .FirstOrDefault();
             Console.WriteLine(apartmentManagerId);
             if(apartmentManager == null) {
-                throw new ArgumentException("apartman yöneticisi bulunamadı");
+                throw new ArgumentException("apartman sakini bulunamadı");
             }
-            // yöneticinin rol bilgisini de döndürmek lazım ki frontend de yöneticinin rolüne göre yönlendirme yapabilsin
+            // apartman sakininin rol bilgisini de döndürmek lazım ki frontend de apartman sakininin rolüne göre yönlendirme yapabilsin
             return Ok(new returnRoleIdforNavigationsDto {
-                RoleId = apartmentManager.RoleId
+                userRole = apartmentManager.UserRoles.Role
             });
         }
+
+        [HttpGet("getUserInfos")]
+        public async Task<IActionResult> GetUserInfos() {
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartmentManager = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
+            if(apartmentManager == null) {
+                throw new ArgumentException("apartman yöneticisi bulunamadı.");
+            }
+            var apartmanManagerInfos = new ApartmentManagerDto {
+                Name = apartmentManager.Name,
+                Surname = apartmentManager.Surname,
+                PhoneNumber = apartmentManager.PhoneNumber,
+                Email = apartmentManager.Email
+            };
+
+            return Ok(apartmanManagerInfos);
+        }
+
         [HttpGet("getApartments")]
         public async Task<IActionResult> GetApartments() {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
@@ -132,7 +152,9 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(string.IsNullOrWhiteSpace(dto.Name) ||
                 string.IsNullOrWhiteSpace(dto.Surname) ||
                 string.IsNullOrWhiteSpace(dto.PhoneNumber) ||
-                string.IsNullOrWhiteSpace(dto.Email)) {
+                string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Password)) {
+
                 throw new ArgumentException("Zorunlu alanlar boş bırakılamaz.");
             }
             //apartmentMananagerToken'dan gelen yöneticinin id değeri
@@ -145,16 +167,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             apartmentManager.Surname = dto.Surname;
             apartmentManager.PhoneNumber = dto.PhoneNumber;
             apartmentManager.Email = dto.Email;
+
+            if(!passwordHash.VerifyPassword(apartmentManager.Password, dto.Password)) {
+                throw new ArgumentException("Eski şifre yanlış.");
+            }
             //şifre guncellemesi
-            if(dto.Password != null && dto.NewPassword != null && dto.NewPasswordAgain != null) {
-                if(dto.NewPassword != dto.NewPasswordAgain) {
-                    throw new ArgumentException("Yeni şifreler eşleşmiyor.");
-                }
-                if(!passwordHash.VerifyPassword(apartmentManager.Password, dto.Password)) {
-                    throw new ArgumentException("Eski şifre yanlış.");
-                }
+            if(dto.NewPassword != null) {
+               
                 apartmentManager.Password = passwordHash.HashPassword(dto.NewPassword);
             }
+            await _context.SaveChangesAsync();
             return Ok(new SuccessResult {
                 Message = "Yönetici bilgileri güncellendi."
             });
@@ -445,17 +467,23 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "kat malikine özel borç eklendi"
             });
         }
-        [HttpPost("getAllPaidMaintenanceFees")]
-        public async Task<IActionResult> GetAllPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+
+        [HttpPost("getUnPaidMaintenanceFees")]
+        public async Task<IActionResult> GetUnPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var apartments = await _context.Apartments.FindAsync(dto.ApartmentId);
+
+            // yöneticinin o apartman da yönetici olup olamdığının kontrolü
+            var apartments = await _context.Apartments
+                .Include(a => a.ApartmentManager)
+                .Where(x => x.ApartmentManager.Id == apartmentManagerId && x.Id == dto.ApartmentId)
+                .FirstOrDefaultAsync();
+
             if(apartments == null) {
                 throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
             }
-            var getPaidMantenanceFees = await _context.MaintenanceFees
+            var getUnPaidMantenanceFees = await _context.MaintenanceFees
                 .Include(x => x.ApartmentResident)
-                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == false)
                 .Select(fee => new MaintenanceFeeDto {
                     Id = fee.Id,
                     Amount = fee.Amount,
@@ -468,17 +496,23 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 })
                 .ToListAsync();
 
-            return Ok(getPaidMantenanceFees);
+            return Ok(getUnPaidMantenanceFees);
+
+
+
         }
-        [HttpPost("getAllPaidSpecialFees")]
-        public async Task<IActionResult> GetAllPaidSpecificFees([FromBody] ApartmentIdDto dto) {
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+
+        [HttpPost("getUnPaidSpecialFees")]
+        public async Task<IActionResult> GetUnPaidSpecialFees([FromBody] ApartmentIdDto dto) {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var apartments = await _context.Apartments.FindAsync(dto.ApartmentId);
+            var apartments = await _context.Apartments
+                .Include(a => a.ApartmentManager)
+                .Where(x => x.ApartmentManager.Id == apartmentManagerId && x.Id == dto.ApartmentId)
+                .FirstOrDefaultAsync();
             if(apartments == null) {
-                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı.");
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı ve ya bu apartman da yönetici değilsiniz");
             }
-            var getPaidMantenanceFees = await _context.ResidentsSpecificFees
+            var getUnPaidSpecialFees = await _context.ResidentsSpecificFees
                 .Include(x => x.ApartmentResident)
                 .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
                 .Select(fee => new ResidentSpecificFeeDto {
@@ -495,7 +529,64 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 })
                 .ToListAsync();
 
-            return Ok(getPaidMantenanceFees);
+            return Ok(getUnPaidSpecialFees);
+        }
+
+        [HttpPost("getAllPaidMaintenanceFees")]
+        public async Task<IActionResult> GetAllPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartments = await _context.Apartments.Include(a => a.ApartmentManager)
+                .Where(x => x.ApartmentManager.Id == apartmentManagerId && x.Id == dto.ApartmentId)
+                .FirstOrDefaultAsync();
+            if(apartments == null) {
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı ve ya bu apartman da yönetici değilsiniz");
+            }
+            var getPaidMaintenanceFees = await _context.MaintenanceFees
+                .Include(x => x.ApartmentResident)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Select(fee => new MaintenanceFeeDto {
+                    Id = fee.Id,
+                    Amount = fee.Amount,
+                    DueDate = fee.DueDate,
+                    IsPaid = fee.IsPaid,
+                    PaymentDate = fee.PaymentDate,
+                    ResidentName = fee.ApartmentResident!.Name,
+                    ResidentSurname = fee.ApartmentResident!.Surname,
+                    Status = fee.Status
+                })
+                .ToListAsync();
+
+            return Ok(getPaidMaintenanceFees);
+        }
+        [HttpPost("getAllPaidSpecialFees")]
+        public async Task<IActionResult> GetAllPaidSpecificFees([FromBody] ApartmentIdDto dto) {
+            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartments = await _context.Apartments.Include(a => a.ApartmentManager)
+                .Where(x => x.ApartmentManager.Id == apartmentManagerId && x.Id == dto.ApartmentId)
+                .FirstOrDefaultAsync();
+            if(apartments == null) {
+                throw new ArgumentException("Yönetici olduğunuz apartman bulunamadı ve ya bu apartman da yönetici değilsiniz");
+            }
+            var getPaidSpecialFees = await _context.ResidentsSpecificFees
+                .Include(x => x.ApartmentResident)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Select(fee => new ResidentSpecificFeeDto {
+                    Id = fee.Id,
+                    Name = fee.Name,
+                    Description = fee.Description,
+                    Amount = fee.Amount,
+                    DueDate = fee.DueDate,
+                    IsPaid = fee.IsPaid,
+                    PaymentDate = fee.PaymentDate,
+                    ResidentName = fee.ApartmentResident!.Name,
+                    ResidentSurname = fee.ApartmentResident!.Surname,
+                    Status = fee.Status
+                })
+                .ToListAsync();
+
+            return Ok(getPaidSpecialFees);
         }
 
         [HttpPost("allowMaintenanceFeePayment")]

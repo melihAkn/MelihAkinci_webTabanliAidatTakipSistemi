@@ -1,4 +1,4 @@
-import { logout } from '../auth'
+import { logout } from '../../auth'
 import { useNavigate } from 'react-router-dom'
 
 const OwnerDashboard = () => {

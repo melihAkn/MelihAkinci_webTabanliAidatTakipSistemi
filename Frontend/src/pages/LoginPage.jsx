@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom'
 const LoginPage = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState(3) // default olarak kat maliki
+  const [role, setRole] = useState(3)
   const navigate = useNavigate()
     const dumyUsername = "melihaeeekinci"
     const dummyPassword = "1234sad5678"
   const handleLogin = async () => {
     const endpoint =
-  role === 2
+  role === "apartmentManager"
     ? 'http://localhost:5263/auth/manager/login'
     : 'http://localhost:5263/auth/resident/login'
 
@@ -35,9 +35,9 @@ const LoginPage = () => {
       // Giriş başarılı → Kullanıcı bilgilerini al
 
       const getUserInfosEndpoint =
-      role === 2
-        ? 'http://localhost:5263/manager/GetUserRoleId'
-        : 'http://localhost:5263/resident/GetUserRoleId'
+      role === "apartmentManager"
+        ? 'http://localhost:5263/manager/GetUserRole'
+        : 'http://localhost:5263/resident/GetUserRole'
 
       const infoRes = await fetch(getUserInfosEndpoint, {
         method: 'GET',
@@ -48,15 +48,11 @@ const LoginPage = () => {
         alert('Kullanıcı bilgisi alınamadı!')
         return
       }
-      // backend den role id dönüyor 
-      // 1 admin
-      // 2 apartmen manager -- apartman yöneticisi
-      // 3 apartment resident -- kat maliki
       const userInfo = await infoRes.json()
-      const userRoleId = userInfo.roleId
-      if (userRoleId === 2) navigate('/manager')
-      else if (userRoleId === 3) navigate('/owner')
-      else if(userRoleId === 1) navigate('/admin')
+      const userRoleId = userInfo.userRole
+      if (userRoleId === "ApartmentManager") navigate('/manager')
+      else if (userRoleId === "ApartmentResident") navigate('/resident')
+      else if(userRoleId === "Admin") navigate('/admin')
       else alert('Bilinmeyen rol!')
 
     } catch (err) {
@@ -65,13 +61,14 @@ const LoginPage = () => {
     }
   }
 
+
   return (
     <div>
       <h2>Giriş</h2>
 
-      <select value={role} onChange={(e) => setRole(Number(e.target.value))}>
-        <option value="3">Kat Maliki</option>
-        <option value="2">Yönetici</option>
+      <select value={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="apartmentResident">Kat Maliki</option>
+        <option value="apartmentManager">Yönetici</option>
       </select>
       <br />
 

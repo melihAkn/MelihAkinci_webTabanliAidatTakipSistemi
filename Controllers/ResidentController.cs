@@ -39,14 +39,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             var token = Request.Cookies["accessToken"];
             Console.WriteLine(token);
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var apartmentResident = _context.ApartmentManagers.Find(apartmentResidentId);
+            var apartmentResident = _context.ApartmentManagers
+                .Include(e => e.UserRoles)
+                .FirstOrDefault();
             Console.WriteLine(apartmentResidentId);
             if(apartmentResident == null) {
                 throw new ArgumentException("apartman sakini bulunamadı");
             }
-            // apartman sakininin rol bilgisini de döndürmek lazım ki frontend de yöneticinin rolüne göre yönlendirme yapabilsin
+            // apartman sakininin rol bilgisini de döndürmek lazım ki frontend de apartman sakininin rolüne göre yönlendirme yapabilsin
             return Ok(new returnRoleIdforNavigationsDto {
-                RoleId = apartmentResident.RoleId
+                userRole = apartmentResident.UserRoles.Role
             });
         }
 
