@@ -3,11 +3,13 @@ import './ManagerDashboard.css'
 import Card from '../../components/card'
 import AddApartmentCard from '../../components/addApartmentCard'
 import UpdateManagerInfoCard from '../../components/UpdateManagerInfoCard'
+import ApartmentCard from '../../components/apartmentCard'
+import GetApartmentUnit from '../../components/getApartmentUnitsCard'
 const ManagerDashboard = () => {
   const [cards, setCards] = useState([])
   const updateInfos = async (endpoint) => {
     try {
-      setCards([<UpdateManagerInfoCard key="add-apartment" />])
+      setCards([<UpdateManagerInfoCard key="update-Manager-info" />])
     } catch (err) {
       console.error(err)
     }
@@ -22,41 +24,202 @@ const ManagerDashboard = () => {
     }
   }
 
-  const getApartments = async (endpoint) => {
-    try {
-      const res = await fetch(`http://localhost:5263/${endpoint}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
 
+  const getApartments = () => {
+    setCards([
+      <ApartmentCard key="get-apartments" onAction={handleApartmentAction} />
+    ])
+  }
+
+  const handleDefineSpecialFee = async (cardData) => {
+    // Burada, 'Özel Ücret Tanımla' butonuna tıklandığında yapılacakları yazabilirsin.
+    // Örneğin:
+    console.log('Özel ücret tanımlama isteği geldi:', cardData)
+    // Burada modal açabilir, form gösterebilir veya başka state güncelleyebilirsin.
+    try {
+      const res = await fetch('http://localhost:5263/manager/setSpecificFeeToApartmentResident', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // borç adı name, açıklama description, tutar amount, id
+        body: JSON.stringify({
+          apartmentResidentId: cardData.apartmentResidents.id
+
+
+
+        }) // DTO'nun property adı burada
+      })
       if (!res.ok) {
-        setCards([{ error: 'Hata oluştu.' }])
+        alert('Silme işlemi başarısız oldu.')
         return
       }
-
-      const data = await res.json()
-      console.log(data)
-      if (Array.isArray(data)) {
-        setCards(data)
-      } else {
-        setCards([data])
-      }
+      alert('Apartman silindi.')
+      getApartments()
     } catch (err) {
-      console.error(err)
-      setCards([{ error: 'Sunucu hatası' }])
+      console.error('Silme hatası:', err)
+      alert('Sunucu hatası')
     }
-  }
 
-  const getUnPaidMaintenanceFees = async (endpoint) => {
 
-  }
-  const getUnPaidSpecialFees = async (endpoint) => {
 
   }
-  const getAllPaidMaintenanceFees = async (endpoint) => {
+  const handleApartmentAction = async (action, apartmentId) => {
+    switch (action) {
+      case 'delete':
+        if (window.confirm('Apartmanı silmek istediğinize emin misiniz?')) {
+          try {
+            const res = await fetch('http://localhost:5263/manager/deleteApartment', {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ apartmentId }) // DTO'nun property adı burada
+            })
+            if (!res.ok) {
+              alert('Silme işlemi başarısız oldu.')
+              return
+            }
+            alert('Apartman silindi.')
+            getApartments()
+          } catch (err) {
+            console.error('Silme hatası:', err)
+            alert('Sunucu hatası')
+          }
+        }
+        break
+      case 'AddApartmentUnit':
+        console.log("asd")
+        break
 
-  }
-  const getAllPaidSpecialFees = async (endpoint) => {
+      case 'unPaidMaintenanceFees':
+        try {
+          const res = await fetch('http://localhost:5263/manager/getUnPaidMaintenanceFees', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          setCards(Array.isArray(data) ? data : [data])
+        } catch (err) {
+          console.error(err)
+          alert('Aidatlar alınamadı')
+        }
+        break
+
+      case 'unPaidSpecialFees':
+        try {
+          const res = await fetch('http://localhost:5263/manager/getUnPaidSpecialFees', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          setCards(Array.isArray(data) ? data : [data])
+        } catch (err) {
+          console.error(err)
+          alert('Aidatlar alınamadı')
+        }
+        break
+      case 'paidMaintenanceFees':
+        try {
+          const res = await fetch('http://localhost:5263/manager/getAllPaidMaintenanceFees', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          setCards(Array.isArray(data) ? data : [data])
+        } catch (err) {
+          console.error(err)
+          alert('Aidatlar alınamadı')
+        }
+        break
+
+      case 'paidSpecialFees':
+        try {
+          const res = await fetch('http://localhost:5263/manager/getAllPaidSpecialFees', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          setCards(Array.isArray(data) ? data : [data])
+        } catch (err) {
+          console.error(err)
+          alert('Aidatlar alınamadı')
+        }
+        break
+
+
+      case 'viewResidents':
+        try {
+          const res = await fetch('http://localhost:5263/manager/getApartmentsUnits', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          const cards = data.map((unit, idx) => (
+            <GetApartmentUnit
+              key={idx}
+              data={unit}
+              onDefineSpecialFee={handleDefineSpecialFee}
+            />
+          ))
+          setCards(cards)
+
+
+          //setCards([<GetApartmentUnit data={data} />])
+        } catch (err) {
+          console.error(err)
+          alert('Kat malikleri alınamadı')
+        }
+        break
+      case 'setMaintenanceFeeToAllResidents':
+        try {
+          const res = await fetch('http://localhost:5263/manager/setMaintenanceFeeToAllResidents', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apartmentId })
+          })
+          const data = await res.json()
+          if(!res.ok){
+            alert(data.detail)
+          }
+            alert(data.message)
+
+
+        } catch (err) {
+          console.error(err)
+          alert('Kat malikleri alınamadı')
+        }
+        break
+
+        
+      default:
+        console.warn('Bilinmeyen işlem:', action)
+    }
 
   }
 
@@ -70,21 +233,15 @@ const ManagerDashboard = () => {
           <li onClick={() => addApartment()}>apartman ekle</li>
 
 
-          <li onClick={() => handleClick('manager/getUnPaidMaintenanceFees')}>ödenmemiş idatlar</li>
-          <li onClick={() => handleClick('manager/getUnPaidSpecialFees')}>ödenmemiş özel ücretler</li>
-          <li onClick={() => handleClick('manager/getAllPaidMaintenanceFees')}>ödeme onayı bekleyen aidatlar</li>
-          <li onClick={() => handleClick('manager/getAllPaidSpecialFees')}>ödeme onayı bekleyen özel ücretler</li>
         </ul>
       </div>
 
       <div id="contentPanel">
         {cards.map((card, index) =>
           typeof card === 'object' && !card.type ? (
-            // Düz veri objesi → Card component
-            <Card key={index} data={card} />
+            <Card key={index} data={card} onDefineSpecialFee={handleDefineSpecialFee} />
           ) : (
-            // JSX bileşeni (örneğin <AddApartmentCard />)
-            <div key={index}>{card}</div>
+            <div key={index}>{card} </div>
           )
         )}
       </div>

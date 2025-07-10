@@ -7,7 +7,7 @@ const LoginPage = () => {
   const [role, setRole] = useState(3)
   const navigate = useNavigate()
     const dumyUsername = "melihaeeekinci"
-    const dummyPassword = "1234sad5678"
+    const dummyPassword = "melihakn"
   const handleLogin = async () => {
     const endpoint =
   role === "apartmentManager"

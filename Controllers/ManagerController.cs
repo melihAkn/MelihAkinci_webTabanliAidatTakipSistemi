@@ -445,7 +445,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPost("setSpecificDebtToApartmentResident")]
+        [HttpPost("setSpecificFeeToApartmentResident")]
         public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificFeeDto dto) {
             var apartmentResident = _context.ApartmentResidents.Find(dto.ResidentId);
             if(apartmentResident == null) {
@@ -514,7 +514,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
             var getUnPaidSpecialFees = await _context.ResidentsSpecificFees
                 .Include(x => x.ApartmentResident)
-                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == true)
+                .Where(x => x.ApartmentResident!.ApartmentUnit!.ApartmentId == dto.ApartmentId && x.IsPaid == false)
                 .Select(fee => new ResidentSpecificFeeDto {
                     Id = fee.Id,
                     Name = fee.Name,

@@ -7,7 +7,7 @@ const AddApartmentCard = () => {
   const [fee, setFee] = useState('')
   const [floorCount, setFloorCount] = useState('')
   const [unitCountPerFloor, setUnitCountPerFloor] = useState('')
-
+  const [isWantedToAutoFillApartmentUnits, setIsWantedToAutoFillApartmentUnits] = useState(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -18,6 +18,7 @@ const AddApartmentCard = () => {
       maintenanceFeeAmount: parseFloat(fee),
       floorCount: parseInt(floorCount),
       apartmentUnitCountForEachFloor: parseInt(unitCountPerFloor),
+      isWantedToAutoFillApartmentUnits
     }
 
     try {
@@ -65,7 +66,15 @@ const AddApartmentCard = () => {
 
         <label>Her katta bulunan daire sayısı</label>
         <input type="number" value={unitCountPerFloor} onChange={e => setUnitCountPerFloor(e.target.value)} placeholder="Daire Sayısı" /><br />
-
+        <label>
+        <input
+          type="checkbox"
+          checked={isWantedToAutoFillApartmentUnits}
+          onChange={(e) => setIsWantedToAutoFillApartmentUnits(e.target.checked)}
+        />{' '}
+        Apartman daireleri otomatik olarak doldurulsun mu
+      </label>
+      <br />
         <button type="submit">Apartman Ekle</button>
       </form>
     </div>
