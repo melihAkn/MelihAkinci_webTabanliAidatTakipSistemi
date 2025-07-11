@@ -498,8 +498,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(getUnPaidMantenanceFees);
 
-
-
         }
 
         [HttpPost("getUnPaidSpecialFees")]

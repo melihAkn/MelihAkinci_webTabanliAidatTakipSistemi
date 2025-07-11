@@ -49,7 +49,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
                 });
 
                 //return Ok(new { apartmentMananagerToken = apartmentManagerapartmentMananagerToken });
@@ -84,7 +83,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Response.Cookies.Append("accessToken", apartmentResidentToken, new CookieOptions {
                     HttpOnly = true,
                     Secure = false,
-                    SameSite = SameSiteMode.Lax
+                    SameSite = SameSiteMode.Strict
                 });
 
 

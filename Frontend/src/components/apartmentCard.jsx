@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
-
+import UpdateApartmentUnit from "./updateApartmentUnitForm"
+import SpecialFeeForm from "./specialFeeForm"
 const ApartmentCard = ({ onAction }) => {
   const [apartments, setApartments] = useState([])
+  const [showSpecialFeeForm, setShowSpecialFeeForm] = useState(false)
 
   useEffect(() => {
     const getApartments = async () => {
@@ -48,9 +50,17 @@ const ApartmentCard = ({ onAction }) => {
           <p><strong>Her Katta Daire:</strong> {apartment.apartmentUnitCountForEachFloor}</p>
 
           <div style={{ marginTop: "1rem" }}>
-            <button onClick={() => onAction?.("AddApartmentUnit", apartment.apartmentId)}>
-              apartmana daire ekle
+
+            <button onClick={() => setShowSpecialFeeForm(prev => !prev)}>
+              {showSpecialFeeForm ? "Formu Gizle" : "apartmana daire ekle"}
             </button>
+            {showSpecialFeeForm && (
+              <SpecialFeeForm
+                onCancel={() => setShowSpecialFeeForm(false)}
+              />
+            )}
+
+
             <button onClick={() => onAction?.("viewResidents", apartment.apartmentId)}>
               Kat Maliklerini Görüntüle
             </button>

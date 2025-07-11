@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Frontend\public\uiImages\" />
     <Folder Include="Frontend\src\components\" />
     <Folder Include="Frontend\src\pages\" />
     <Folder Include="Views\" />
