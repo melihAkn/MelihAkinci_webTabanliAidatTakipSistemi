@@ -1,4 +1,5 @@
 ﻿using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
     public class ApartmentDto {

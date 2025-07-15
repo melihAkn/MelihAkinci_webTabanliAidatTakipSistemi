@@ -36,22 +36,24 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
 
             var verifyHashedPasswordForApartmentManager = passwordHash.VerifyPassword(apartmentManager.Password, dto.Password);
-
-            if(apartmentManager != null && verifyHashedPasswordForApartmentManager == true) {
+            if(verifyHashedPasswordForApartmentManager == false) {
+                throw new ArgumentException("Kullanıcı adı veya şifre hatalı");
+            }
+            if(apartmentManager != null) {
                 // apartmentMananagerToken'a eklemek için yöneticinin rol bilgisinin çekilmesi
                 var apartmanManagerRole = await _context.UserRoles.FirstOrDefaultAsync(role => role.Id == apartmentManager.RoleId);
                 if(apartmanManagerRole is null) {
                     throw new ArgumentException("Rol bulunamadı.");
                 }
 
-                string apartmentManagerapartmentMananagerToken = GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
-                Response.Cookies.Append("accessToken", apartmentManagerapartmentMananagerToken, new CookieOptions {
+                string apartmentMananagerToken = GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
+                Response.Cookies.Append("accessToken", apartmentMananagerToken, new CookieOptions {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
                 });
-
-                //return Ok(new { apartmentMananagerToken = apartmentManagerapartmentMananagerToken });
+                Console.WriteLine(apartmentMananagerToken);
+                //return Ok(new { apartmentMananagerToken = apartmentMananagerToken });
             }
             return Ok(new SuccessResult {
                 Message = "giriş başarılı"

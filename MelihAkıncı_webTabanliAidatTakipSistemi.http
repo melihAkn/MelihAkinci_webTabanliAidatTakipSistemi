@@ -35,7 +35,7 @@ Content-Type: application/json
 
 {
   "username" : "melihaeeekinci",
-  "password" : "1234sad5678"
+  "password" : "melihakn"
 }
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
