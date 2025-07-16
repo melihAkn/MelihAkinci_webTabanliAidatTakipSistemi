@@ -27,12 +27,12 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         //kullanıcılar için yonetici o daireye kullanıcı eklediği zaman e posta ile kullanıcı adı ve şifre bilgileri gonderilecek ve ilk giriş yaptığında şifresini ve kullanıcı bilgilerini güncellemesi istenecek
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto) {
-            
+
             var role = await _context.UserRoles.FirstOrDefaultAsync(rol => rol.Id == 2);
             if(role is null) {
                 return BadRequest("Rol bulunamadı.");
             }
-            
+
             // mail adresi geçerli mi kontrol etmeliyiz
 
             //tum değerlerin doldurulması zorunlu
@@ -44,7 +44,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 string.IsNullOrWhiteSpace(dto.Password)) {
                 return BadRequest("Zorunlu alanlar boş bırakılamaz.");
             }
-            
+
 
             // değerlerin veritabanına eklenmeden önce trim ile başında ki ve sonunda ki boşlukların silinmesi
             dto.Name = dto.Name.Trim();

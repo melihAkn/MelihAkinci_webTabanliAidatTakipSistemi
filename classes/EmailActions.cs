@@ -41,7 +41,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
                 Console.WriteLine($"Email gönderilirken hata oluştu: {ex.Message}");
                 return false;
             }
-     
+
 
         }
     }

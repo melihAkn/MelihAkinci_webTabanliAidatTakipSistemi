@@ -99,14 +99,14 @@ Authorization: Bearer {{apartmentMananagerToken}}
 
 ###
 
-POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setSpecificDebtToApartmentResident
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/setSpecificFeeToApartmentResident
 Content-Type: application/json
 Authorization: Bearer {{apartmentMananagerToken}}
 
 {
   "name": "mehmet",
   "description": "asansor parası",
-  "price" : 2500.99,
+  "amount" : 2500.99,
   "residentId": 5
 }
 
@@ -201,9 +201,35 @@ Authorization: Bearer {{apartmentMananagerToken}}
 
 }
 
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getMonthlyMaintenanceFeeReportForApartment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
 
+{
+  "apartmentId" : 13,
+  "reportDate" : "2025-08-28"
 
+}
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getMonthlySpecialFeeReportForApartment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
 
+{
+  "apartmentId" : 13,
+  "reportDate" : "2025-08-28"
+
+}
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getMonthlyMaintenanceFeeReport
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "reportDate" : "2025-08-28"
+
+}
 ###
 // -------------------------------------------------- Apartment Resident routes ------------------------------------------
 @apartmentResidentToken = 
@@ -279,6 +305,7 @@ Authorization: Bearer {{apartmentResidentToken}}
   "specialFeeId" : 2
 
 }
+
 
 
 

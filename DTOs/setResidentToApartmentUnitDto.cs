@@ -1,4 +1,4 @@
-﻿namespace MelihAkıncı_webTabanliAidatTakipSistemi.Models {
+﻿namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
     public class setResidentToApartmentUnitDto {
         public int ApartmentUnitId { get; set; }
         public required string Name { get; set; }
