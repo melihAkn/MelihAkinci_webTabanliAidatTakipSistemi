@@ -13,6 +13,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
 
         public DbSet<MaintenanceFee> MaintenanceFees { get; set; }
         public DbSet<ResidentsSpecificFee> ResidentsSpecificFees { get; set; }
+        public DbSet<PaymentNotifications> PaymentNotifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             //apartman yönetici tablosu için unique ayarlamaları
@@ -78,18 +79,37 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Data {
                .HasForeignKey(unit => unit.ApartmentId)
                .OnDelete(DeleteBehavior.Cascade);
 
-            // maintenanceFee için enum dönüştürmesi
-            modelBuilder.Entity<MaintenanceFee>()
-               .Property(x => x.Status)
-               .HasConversion<string>();
+            // payment notifications ile maintenance fee, residents special fee, apartment resident ve apartment arasındaki ilişkiyi özelleştirme
+            modelBuilder.Entity<PaymentNotifications>()
+                .HasOne(notification => notification.MaintenanceFee)
+                .WithMany()
+                .HasForeignKey(notification => notification.MaintenanceFeeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // specificdebt için enum dönüştürmesi
-            modelBuilder.Entity<ResidentsSpecificFee>()
-               .Property(x => x.Status)
-               .HasConversion<string>();
+            modelBuilder.Entity<PaymentNotifications>()
+                .HasOne(notification => notification.ResidentsSpecificFee)
+                .WithMany()
+                .HasForeignKey(notification => notification.SpecialFeeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PaymentNotifications>()
+                .HasOne(notification => notification.ApartmentResident)
+                .WithMany()
+                .HasForeignKey(notification => notification.ResidentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PaymentNotifications>()
+                .HasOne(notification => notification.Apartment)
+                .WithMany()
+                .HasForeignKey(notification => notification.ApartmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             base.OnModelCreating(modelBuilder);
 
+            // modeller oluştuktan sonra seed yöntemi ile rol bilgilerini ekleme
             modelBuilder.Entity<UserRoles>().HasData(
                 new UserRoles { Id = 1, Role = "Admin" },
                 new UserRoles { Id = 2, Role = "ApartmentManager" },

@@ -10,6 +10,8 @@ using System.Data;
 using System.Drawing;
 using System.Net;
 using System.Net.Mail;
+using System.Security.Cryptography.X509Certificates;
+using static MelihAkıncı_webTabanliAidatTakipSistemi.classes.PaymentStatusEnum;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
     [Authorize(Roles = "ApartmentManager")]
@@ -481,7 +483,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         Amount = apartment.MaintenanceFeeAmount,
                         DueDate = GetNextMonth28thDay(), // bir sonraki ayın 28'i son ödeme tarihi
                         IsPaid = false,
-                        Status = PaymentStatusEnum.PaymentStatus.Beklemede,
                         ApartmentResident = resident
                     };
                     _context.MaintenanceFees.Add(maintenanceFee);
@@ -551,7 +552,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     PaymentDate = fee.PaymentDate,
                     ResidentName = fee.ApartmentResident!.Name,
                     ResidentSurname = fee.ApartmentResident!.Surname,
-                    Status = fee.Status
                 })
                 .ToListAsync();
 
@@ -584,7 +584,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     PaymentDate = fee.PaymentDate,
                     ResidentName = fee.ApartmentResident!.Name,
                     ResidentSurname = fee.ApartmentResident!.Surname,
-                    Status = fee.Status
                 })
                 .ToListAsync();
 
@@ -615,7 +614,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     PaymentDate = fee.PaymentDate,
                     ResidentName = fee.ApartmentResident!.Name,
                     ResidentSurname = fee.ApartmentResident!.Surname,
-                    Status = fee.Status
                 })
                 .ToListAsync();
 
@@ -646,174 +644,140 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     PaymentDate = fee.PaymentDate,
                     ResidentName = fee.ApartmentResident!.Name,
                     ResidentSurname = fee.ApartmentResident!.Surname,
-                    Status = fee.Status
                 })
                 .ToListAsync();
 
             return Ok(getPaidSpecialFees);
         }
-
-        [HttpPost("allowMaintenanceFeePayment")]
-        public async Task<IActionResult> AllowMaintenanceFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validator
-            sanitizeAndValidate.IsValidNumber(dto.MaintenanceFeeId);
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
-            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var maintenanceFees = await _context.MaintenanceFees.FindAsync(dto.MaintenanceFeeId);
-            if(maintenanceFees == null) {
-                throw new ArgumentException("aidat bulunamadı");
-            }
-            maintenanceFees.Status = PaymentStatusEnum.PaymentStatus.Onaylandi;
-            await _context.SaveChangesAsync();
-
-            return Ok(new SuccessResult {
-                Message = "aidat ödemesi başarılı bir şekilde onaylandı"
+        //
+        public static List<PaymentNotificationDto> GetPaymentNotifications(List<PaymentNotifications> paymentNotifications, List<PaymentNotificationDto> paymentNotification) {
+            // yöneticinin apartmanına ait ödeme bildirimlerini getirme işlemi
+            paymentNotifications.ForEach(notification => {
+                paymentNotification.Add(new PaymentNotificationDto {
+                    // payment notification id
+                    paymentNotificationId = notification.Id,
+                    // apartment infos
+                    ApartmentName = notification.Apartment!.Name,
+                    ApartmentAdress = notification.Apartment!.Address,
+                    // resident infos
+                    ResidentName = notification.ApartmentResident!.Name,
+                    ResidentSurname = notification.ApartmentResident!.Surname,
+                    ResidentPhoneNumber = notification.ApartmentResident!.PhoneNumber,
+                    ResidentEmail = notification.ApartmentResident!.Email,
+                    // payment infos
+                    PaymentName = "aidat" ?? notification.ResidentsSpecificFee?.Name ?? "Ödeme Bilgisi Yok",
+                    PaymentDescription = "aidat ödemesi" ?? notification.ResidentsSpecificFee?.Description ?? "Ödeme Bilgisi Yok",
+                    PaymentDate = notification.PaymentDate ?? DateTime.UtcNow,
+                    Amount = notification.MaintenanceFee?.Amount ?? notification.ResidentsSpecificFee?.Amount ?? 0,
+                    DueDate = notification.MaintenanceFee?.DueDate ?? notification.ResidentsSpecificFee?.DueDate ?? DateTime.MinValue,
+                    Status = notification.Status,
+                    NotificationMessage = notification.Message,
+                    ReceiptUrl = notification.ReceiptUrl,
+                });
             });
+            return paymentNotification;
 
 
         }
-        [HttpPost("DenyMaintenanceFeePayment")]
-        public async Task<IActionResult> DenyMaintenanceFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validator
-            sanitizeAndValidate.IsValidNumber(dto.MaintenanceFeeId);
-
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
-            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var maintenanceFees = await _context.MaintenanceFees.FindAsync(dto.MaintenanceFeeId);
-            if(maintenanceFees == null) {
-                throw new ArgumentException("aidat bulunamadı");
-            }
-            maintenanceFees.Status = PaymentStatusEnum.PaymentStatus.Reddedildi;
-            await _context.SaveChangesAsync();
-
-            return Ok(new SuccessResult {
-                Message = "aidat ödemesi başarılı bir şekilde reddedildi"
-            });
-
-
-        }
-
-
-        [HttpPost("allowSpecificFeePayment")]
-        public async Task<IActionResult> AllowSpecificFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validator
-            sanitizeAndValidate.IsValidNumber(dto.SpecialFeeId);
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
-            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var specificFees = await _context.ResidentsSpecificFees.FindAsync(dto.SpecialFeeId);
-            if(specificFees == null) {
-                throw new ArgumentException("özel ücret bulunamadı");
-            }
-            specificFees.Status = PaymentStatusEnum.PaymentStatus.Onaylandi;
-            await _context.SaveChangesAsync();
-
-            return Ok(new SuccessResult {
-                Message = "özel ücret ödemesi başarılı bir şekilde onaylandı"
-            });
-
-
-        }
-        [HttpPost("DenySpecificFeePayment")]
-        public async Task<IActionResult> DenySpecificFeePayment([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validator
-            sanitizeAndValidate.IsValidNumber(dto.SpecialFeeId);
-
-            // yöneticinin apartmanına ait tüm ödenmiş aidatları getirme işlemi
-            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var specificFees = await _context.ResidentsSpecificFees.FindAsync(dto.SpecialFeeId);
-            if(specificFees == null) {
-                throw new ArgumentException("özel ücret bulunamadı");
-            }
-            specificFees.Status = PaymentStatusEnum.PaymentStatus.Reddedildi;
-            await _context.SaveChangesAsync();
-
-            return Ok(new SuccessResult {
-                Message = "özel ücret ödemesi başarılı bir şekilde reddedildi"
-            });
-
-
-        }
-
+        [HttpPost("getPaymentNotifications")]
         public IActionResult PaymentNotifications([FromBody] ApartmentIdDto dto) {
-            // yapılan ödeme bildirimin de ne olacak
             // aidat ya da özel ücret ödemesi yapıldıktan sonra yöneticinin onayına sunulacak
             // yani yönetici yapılan ödemeleri göreblicek ve ilgili rotalardan onaylayabilecek ya da reddedebilecek
-            // yani veritabanına bir kayıt eklenerek gerekli bilgileri çekip bu rota ile gönderebiliriz
-            // yönetici de bu rotadan yapılan ödeme bildirimlerini görebilecek ama bunu apartman id sine göre mi yapmalı yoksa tek bir yerden tüm apartmanlar için mi yapmalı
-            // apartman id sine göre yapmalı çünkü yöneticinin birden fazla apartmanı olabilir ve her apartmanın ödemelerini ayrı ayrı görmesi gerekir
-
+            // yönetici ödeme bildirimlerini iki yolla da görebilmeli hem apartman id sine göre hem de bir bildirim gibi ayrı bir yerde
+            // yeni bir dto lazım gibi çünkü hem apartman ismi, kat maliki ismi soyismi gibi ek bilgiler lazım
+            // gereken şema  bu şekilde
+            /*
+             * ------------- apartman bilgileri -------------
+             * apartman ismi
+             * apartman adresi
+             * 
+             * ------------- kat maliki bilgileri -------------
+             * kat maliki ismi
+             * kat maliki soyismi
+             * kat maliki telefon numarası
+             * kat maliki e-posta adresi
+             * 
+             * 
+             * 
+             * ------------- ödeme(aidat, özel ücret) bilgileri -------------
+             * tutar
+             * ödeme tarihi
+             * son ödeme tarihi
+             * ödeme durumu (beklemede, onaylandı, reddedildi)
+             * dekont url
+             * mesaj (yöneticiye iletilen mesaj)
+             * 
+             * 
+             * 
+             */
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
 
-            return Ok();
+            List<PaymentNotificationDto> paymentNotification = new List<PaymentNotificationDto>();
+
+            if(dto.ApartmentId == 0) {
+                var paymentNotifications = _context.PaymentNotifications
+                    .Include(x => x.Apartment)
+                    .Include(x => x.ApartmentResident)
+                    .Include(x => x.MaintenanceFee)
+                    .Include(x => x.ResidentsSpecificFee)
+                    .Where(x => x.Status == PaymentStatus.Beklemede && x.ManagerId == apartmentManagerId)
+                    .ToList();
+                paymentNotification = GetPaymentNotifications(paymentNotifications, paymentNotification);
+            }
+            else if(dto.ApartmentId > 0) {
+                var paymentNotifications = _context.PaymentNotifications
+                    .Include(x => x.Apartment)
+                    .Include(x => x.ApartmentResident)
+                    .Include(x => x.MaintenanceFee)
+                    .Include(x => x.ResidentsSpecificFee)
+                    .Where(x => x.Status == PaymentStatus.Beklemede && x.ApartmentId == dto.ApartmentId)
+                    .ToList();
+                paymentNotification = GetPaymentNotifications(paymentNotifications, paymentNotification);
+            }
+            else {
+                throw new ArgumentException("Apartman id değeri geçersiz.");
+            }
+
+            return Ok(paymentNotification);
         }
+        [HttpPost("allowPayment")]
+        public async Task<IActionResult> AllowPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
+            sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
+            sanitizeAndValidate.IsValidText(dto.Message);
+            var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
+            if(paymentNotification == null) {
+                throw new ArgumentException("Ödeme bildirimi bulunamadı.");
+            }
+            paymentNotification.Message = dto.Message;
+            paymentNotification.Status = PaymentStatus.onaylandi;
+            _context.PaymentNotifications.Update(paymentNotification);
+            await _context.SaveChangesAsync();
+
+            return Ok(new SuccessResult { Message = "ödeme başarılı bir şekilde onaylandı" });
+        }
+        [HttpPost("denyPayment")]
+        public async Task<IActionResult> DenyPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
+            sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
+            sanitizeAndValidate.IsValidText(dto.Message);
+            if(string.IsNullOrWhiteSpace(dto.Message)) {
+                throw new ArgumentException("Mesaj boş olamaz.");
+            }
+            var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
+            if(paymentNotification == null) {
+                throw new ArgumentException("Ödeme bildirimi bulunamadı.");
+            }
+            paymentNotification.Message = dto.Message;
+            paymentNotification.Status = PaymentStatus.Reddedildi;
+            _context.PaymentNotifications.Update(paymentNotification);
+            await _context.SaveChangesAsync();
+            return Ok(new SuccessResult { Message = "ödeme başarılı bir şekilde reddedildi" });
+        }
+
+
         [HttpPost("getMonthlyMaintenanceFeeReport")]
         public async Task<IActionResult> GetMonthlyMaintenanceFeeReport([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
 
-            // input validate
-            sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
-            // rapor için gereken bilgilerin çekilmesi burada select ile sadece gereken bilgiler çekilmeli
-            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var managerInfos = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
-
-            var apartmentInfos = await _context.Apartments
-                .Where(x => x.ManagerId == apartmentManagerId)
-                .ToListAsync();
-
-            // oluşturmuş olduğum sınıf yapısı ile rapor için bir liste oluşturulması
-            List<MaintenanceFeeReport> maintenanceFeeReport = new List<MaintenanceFeeReport>();
-            foreach(var apartment in apartmentInfos) {
-                
-                Console.WriteLine(apartmentInfos.Count);
-                maintenanceFeeReport.Add(new MaintenanceFeeReport { 
-                ApartmentName = apartment.Name,
-                ManagerName = managerInfos!.Name,
-                PaidMaintenanceFees = [],
-                UnPaidMaintenanceFees = [],
-                TotalMaintenanceFees = 0,
-                TotalPaidMaintenanceFees = 0,
-                TotalUnPaidMaintenanceFees = 0
-
-                });
-                int currentIndex = maintenanceFeeReport.Count - 1;
-                var maintenanceFees = await _context.MaintenanceFees
-                    .Include(x => x.ApartmentResident)
-                    .Where(x => x.ApartmentId == apartment.Id && x.DueDate == dto.ReportDate)
-                    .ToListAsync();
-
-                foreach(var fee in maintenanceFees) {
-                    maintenanceFeeReport[currentIndex].TotalMaintenanceFees = maintenanceFees.Count;
-                    maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees = maintenanceFees.Count(x => x.IsPaid);
-                    maintenanceFeeReport[currentIndex].TotalUnPaidMaintenanceFees = maintenanceFees.Count - maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees;
-
-                    if(fee.IsPaid) {
-                       maintenanceFeeReport[currentIndex].PaidMaintenanceFees = maintenanceFeeReport[currentIndex].PaidMaintenanceFees.Append(new {
-                            ResidentName = fee.ApartmentResident!.Name,
-                            ResidentSurname = fee.ApartmentResident!.Surname,
-                            ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
-                            ResidentEmail = fee.ApartmentResident!.Email,
-                            fee.Amount,
-                            fee.DueDate,
-                            fee.PaymentDate
-                        }).ToArray();
-                    }
-                    else {
-
-                        maintenanceFeeReport[currentIndex].UnPaidMaintenanceFees = maintenanceFeeReport[currentIndex].UnPaidMaintenanceFees.Append(new {
-                            ResidentName = fee.ApartmentResident!.Name,
-                            ResidentSurname = fee.ApartmentResident!.Surname,
-                            ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
-                            ResidentEmail = fee.ApartmentResident!.Email,
-                            fee.Amount,
-                            fee.DueDate
-                        }).ToArray();
-                    }
-                }
-            }
-            return Ok(maintenanceFeeReport);
-
-        }
-        [HttpPost("getMonthlySpecialFeeReport")]
-        public async Task<IActionResult> GetMonthlySpecialFeeReport([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
             // input validate
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
             // rapor için gereken bilgilerin çekilmesi burada select ile sadece gereken bilgiler çekilmeli
@@ -840,15 +804,15 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
                 });
                 int currentIndex = maintenanceFeeReport.Count - 1;
-                var specialFees = await _context.MaintenanceFees
+                var maintenanceFees = await _context.MaintenanceFees
                     .Include(x => x.ApartmentResident)
                     .Where(x => x.ApartmentId == apartment.Id && x.DueDate == dto.ReportDate)
                     .ToListAsync();
 
-                foreach(var fee in specialFees) {
-                    maintenanceFeeReport[currentIndex].TotalMaintenanceFees = specialFees.Count;
-                    maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees = specialFees.Count(x => x.IsPaid);
-                    maintenanceFeeReport[currentIndex].TotalUnPaidMaintenanceFees = specialFees.Count - maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees;
+                foreach(var fee in maintenanceFees) {
+                    maintenanceFeeReport[currentIndex].TotalMaintenanceFees = maintenanceFees.Count;
+                    maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees = maintenanceFees.Count(x => x.IsPaid);
+                    maintenanceFeeReport[currentIndex].TotalUnPaidMaintenanceFees = maintenanceFees.Count - maintenanceFeeReport[currentIndex].TotalPaidMaintenanceFees;
 
                     if(fee.IsPaid) {
                         maintenanceFeeReport[currentIndex].PaidMaintenanceFees = maintenanceFeeReport[currentIndex].PaidMaintenanceFees.Append(new {
@@ -858,7 +822,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                             ResidentEmail = fee.ApartmentResident!.Email,
                             fee.Amount,
                             fee.DueDate,
-                            fee.PaymentDate
+                            fee.PaymentDate,
+                            fee.IsPaid
                         }).ToArray();
                     }
                     else {
@@ -869,12 +834,80 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                             ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
                             ResidentEmail = fee.ApartmentResident!.Email,
                             fee.Amount,
-                            fee.DueDate
+                            fee.DueDate,
+                            fee.IsPaid
                         }).ToArray();
                     }
                 }
             }
             return Ok(maintenanceFeeReport);
+
+        }
+        [HttpPost("getMonthlySpecialFeeReport")]
+        public async Task<IActionResult> GetMonthlySpecialFeeReport([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
+            // input validate
+            sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
+            // rapor için gereken bilgilerin çekilmesi burada select ile sadece gereken bilgiler çekilmeli
+            int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var managerInfos = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
+
+            var apartmentInfos = await _context.Apartments
+                .Where(x => x.ManagerId == apartmentManagerId)
+                .ToListAsync();
+
+            // oluşturmuş olduğum sınıf yapısı ile rapor için bir liste oluşturulması
+            List<SpecialFeeReport> specialFeeReport = new List<SpecialFeeReport>();
+            foreach(var apartment in apartmentInfos) {
+
+                Console.WriteLine(apartmentInfos.Count);
+                specialFeeReport.Add(new SpecialFeeReport {
+                    ApartmentName = apartment.Name,
+                    ManagerName = managerInfos!.Name,
+                    PaidSpecialFees = [],
+                    UnpaidSpecialFees = [],
+                    TotalSpecialFees = 0,
+                    TotalPaidSpecialFees = 0,
+                    TotalUnPaidSpecialFees = 0
+
+                });
+                int currentIndex = specialFeeReport.Count - 1;
+                var specialFees = await _context.MaintenanceFees
+                    .Include(x => x.ApartmentResident)
+                    .Where(x => x.ApartmentId == apartment.Id && x.DueDate == dto.ReportDate)
+                    .ToListAsync();
+
+                foreach(var fee in specialFees) {
+                    specialFeeReport[currentIndex].TotalSpecialFees = specialFees.Count;
+                    specialFeeReport[currentIndex].TotalPaidSpecialFees = specialFees.Count(x => x.IsPaid);
+                    specialFeeReport[currentIndex].TotalUnPaidSpecialFees = specialFees.Count - specialFeeReport[currentIndex].TotalPaidSpecialFees;
+
+                    if(fee.IsPaid) {
+                        specialFeeReport[currentIndex].PaidSpecialFees = specialFeeReport[currentIndex].PaidSpecialFees.Append(new {
+                            ResidentName = fee.ApartmentResident!.Name,
+                            ResidentSurname = fee.ApartmentResident!.Surname,
+                            ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
+                            ResidentEmail = fee.ApartmentResident!.Email,
+                            fee.Amount,
+                            fee.DueDate,
+                            fee.PaymentDate,
+                            fee.IsPaid
+                        }).ToArray();
+                    }
+                    else {
+
+                        specialFeeReport[currentIndex].UnpaidSpecialFees = specialFeeReport[currentIndex].UnpaidSpecialFees.Append(new {
+                            ResidentName = fee.ApartmentResident!.Name,
+                            ResidentSurname = fee.ApartmentResident!.Surname,
+                            ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
+                            ResidentEmail = fee.ApartmentResident!.Email,
+                            fee.Amount,
+                            fee.DueDate,
+                            fee.IsPaid
+                        }).ToArray();
+                    }
+                }
+            }
+            return Ok(specialFeeReport);
         }
 
 
@@ -918,7 +951,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ResidentEmail = fee.ApartmentResident!.Email,
                         fee.Amount,
                         fee.DueDate,
-                        fee.PaymentDate
+                        fee.PaymentDate,
+                        fee.IsPaid
                     }).ToArray();
                 }
                 else {
@@ -928,7 +962,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
                         ResidentEmail = fee.ApartmentResident!.Email,
                         fee.Amount,
-                        fee.DueDate
+                        fee.DueDate,
+                        fee.IsPaid
                     }).ToArray();
                 }
             }
@@ -974,7 +1009,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ResidentEmail = fee.ApartmentResident!.Email,
                         fee.Amount,
                         fee.DueDate,
-                        fee.PaymentDate
+                        fee.PaymentDate,
+                        fee.IsPaid
                     }).ToArray();
                 }
                 else {
@@ -984,7 +1020,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                         ResidentPhoneNumber = fee.ApartmentResident!.PhoneNumber,
                         ResidentEmail = fee.ApartmentResident!.Email,
                         fee.Amount,
-                        fee.DueDate
+                        fee.DueDate,
+                        fee.IsPaid
                     }).ToArray();
                 }
             }

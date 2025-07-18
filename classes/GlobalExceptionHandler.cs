@@ -15,17 +15,18 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler {
         CancellationToken cancellationToken) {
 
         _logger.LogError(exception,
-            "Unhandled exception occurred. Path: {Path}, Method: {Method}, Message: {Message} stackTrace: {StackTrace}",
+            "Unhandled exception occurred. Path: {Path}, Method: {Method}, Message: {Message} stackTrace: {StackTrace} inner exception: {InnerException}",
             httpContext.Request.Path,
             httpContext.Request.Method,
             exception.Message,
-            exception.StackTrace
+            exception.StackTrace,
+            exception.InnerException
             );
 
         var statusCode = StatusCodes.Status500InternalServerError;
         var title = "Server Error";
         var detail = exception.Message;
-
+        var innerException = exception.InnerException;
         if(exception is UnauthorizedAccessException) {
             statusCode = StatusCodes.Status401Unauthorized;
             title = "Unauthorized";

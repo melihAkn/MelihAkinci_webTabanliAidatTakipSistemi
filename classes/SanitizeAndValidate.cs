@@ -6,7 +6,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
     public class SanitizeAndValidate {
         public class InputSanitizer {
             public string SanitizeString(string unSanitizedText) {
-                string sanitized = Regex.Replace(unSanitizedText, @"[^\u0000-\u007F]+", string.Empty); // ASCII dışı karakterleri sil
+                string sanitized = Regex.Replace(unSanitizedText, @"[^\u0000-\u007F]+", string.Empty);
                 sanitized = Regex.Replace(sanitized, @"<[^>]*>", string.Empty); // HTML tag'leri
                 return sanitized.Trim();
             }
@@ -49,7 +49,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
             if(string.IsNullOrWhiteSpace(phoneNumber)) return false;
             return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(\+90|0)?5\d{9}$") ? true : throw new ArgumentException("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
         }
-        public bool IsValidPassword(string password, int minLength = 6, int maxLength = 20) {
+        public bool IsValidPassword(string password, int minLength = 8, int maxLength = 256) {
             if(string.IsNullOrWhiteSpace(password)) {
                 throw new ArgumentException("şifre boş olamaz");
             }

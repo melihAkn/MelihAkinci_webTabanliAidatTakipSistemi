@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using static MelihAkıncı_webTabanliAidatTakipSistemi.classes.PaymentStatusEnum;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
@@ -21,12 +22,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         /*
          * bilgilerini guncelleyebilme / put --------------------------------------- done
          * kendi dairesini gorebilme / get --------------------------------------- done
-         * aidat bilgilerini / get ---------------- done
+         * aidat bilgilerini görebilme / get ---------------- done
          * özel ücretlerini gorebilme / get ---------------- done
          * 
          * aidat ödeyebilme  / post ---------------- done
          * özel ücretini ödeyebilme / post ---------------- done
          * yapmış olduğu ödemeleri ve durumlarını(red, beklemede, onay vb.) görüntüleme / get ---------------- done
+         * ödeme yaptıktan sonra ödeme bildirimi yapabilme ve dekont yukleyebilme
          * dekont yükleme ödeme yaptıktan sonra ödemeler panelin de dekont yükle butonu olmalı /  post 
         */
 
@@ -119,7 +121,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     DueDate = mf.DueDate,
                     IsPaid = mf.IsPaid,
                     PaymentDate = mf.PaymentDate,
-                    Status = mf.Status
                 });
             }
 
@@ -144,59 +145,137 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     PaymentDate = spf.PaymentDate,
                     DueDate = spf.DueDate,
                     IsPaid = spf.IsPaid,
-                    Status = spf.Status
                 });
             }
             return Ok(mySpecialFees);
         }
-        [HttpPost("payMyMaintenanceFee")]
-        public async Task<IActionResult> PayMyApartmentUnitMaintenanceFee([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validation
-            sanitizeAndValidate.IsValidNumber(dto.MaintenanceFeeId);
-
-            var myMaintenancefee = await _context.MaintenanceFees.Where(mf => mf.IsPaid == false && mf.Id == dto.MaintenanceFeeId).FirstOrDefaultAsync();
-            if(myMaintenancefee == null) {
-                throw new ArgumentException("Ödenmemiş aidat bulunamadı.");
-            }
-            myMaintenancefee!.IsPaid = true;
-            myMaintenancefee!.PaymentDate = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            return Ok(new SuccessResult {
-                Message = "aidat başarılı bir şekilde ödendi"
-            });
-        }
-        [HttpPost("payMySpecialFee")]
-        public async Task<IActionResult> PayMyApartmentUnitSpecialFee([FromBody] PayOrAllowOrDenyMaintenanceOrSpecialFeeDto dto) {
-            // input validation
-            sanitizeAndValidate.IsValidNumber(dto.SpecialFeeId);
-
-            var mySpecialFee = await _context.ResidentsSpecificFees.Where(mf => mf.IsPaid == false && mf.Id == dto.SpecialFeeId).FirstOrDefaultAsync();
-            if(mySpecialFee == null) {
-                throw new ArgumentException("Ödenmemiş özel ücret bulunamadı.");
-            }
-            mySpecialFee!.IsPaid = true;
-            mySpecialFee!.PaymentDate = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-
-            return Ok(new SuccessResult {
-                Message = "özel ücret başarılı bir şekilde ödendi"
-            });
-        }
-        public IActionResult CreatePaymentNotification() {
-            // apartman sakini için ödeme bildirimi yapabileceği rota
-            // ya ödeme yaptıktan sonra otomatik olarak ödeme bildirimi yapılacak ya da buradan manuel olarak yapılacak
+        [HttpPost("CreatePaymentNotification")]
+        public async Task<IActionResult> CreatePaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
             // ödeme bildirimi yapıldıktan sonra ödeme durumu beklemede olarak ayarlanacak
 
-
-
-
             // burada ödeme yapıldıktan sonra dekont yükleme işlemi yapılabilir
+            // input validation
+            sanitizeAndValidate.IsValidNumber(dto.MaintenanceFeeId);
+            sanitizeAndValidate.IsValidNumber(dto.SpecialFeeId);
+            sanitizeAndValidate.IsValidText(dto.NotificationMessage, 5, 100);
 
+            // koşula bağlı dönen mesaj belirli olacağı için önceden sınıfı oluşturma(initialize)
+            var successResult = new SuccessResult {
+                Message = ""
+            };
 
-            return Ok();
+            if(dto.MaintenanceFeeId == 0 && dto.SpecialFeeId == 0) {
+                throw new ArgumentException("hem aidat hem de özel ücret aynı anda ödenemez");
+            }
+            int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            if(dto.MaintenanceFeeId != 0) {
+                var maintenanceFee = _context.MaintenanceFees.FirstOrDefault(mf => mf.Id == dto.MaintenanceFeeId && mf.ResidentId == apartmentResidentId && mf.IsPaid == false);
+                if(maintenanceFee == null) {
+                    throw new ArgumentException("Ödenmemiş aidat bulunamadı.");
+                }
+                var apartmentResident = _context.ApartmentResidents.FirstOrDefault(ar => ar.Id == apartmentResidentId);
+                var apartment = _context.Apartments
+                    .Include(x => x.ApartmentManager)
+                    .FirstOrDefault(x => x.Id == maintenanceFee.ApartmentId);
+
+                if(apartmentResident == null) {
+                    throw new ArgumentException("Apartman sakini bulunamadı.");
+                }
+                if(apartment == null) {
+                    throw new ArgumentException("Apartman bulunamadı.");
+                }
+                var paymentNotification = new PaymentNotifications {
+                    MaintenanceFeeId = dto.MaintenanceFeeId,
+                    SpecialFeeId = null,
+                    ApartmentId = maintenanceFee.ApartmentId,
+                    ResidentId = apartmentResidentId,
+                    ManagerId = apartment.ManagerId,
+                    Amount = maintenanceFee.Amount,
+                    DueDate = maintenanceFee.DueDate,
+                    NotificationMessage = dto.NotificationMessage,
+                    ReceiptUrl = dto.ReceiptUrl,
+                    // navigation properties
+                    ResidentsSpecificFee = null, // çünkü bu bir aidat ödemesi
+                    MaintenanceFee = maintenanceFee,
+                    Apartment = apartment,
+                    ApartmentResident = apartmentResident
+
+                };
+                maintenanceFee.PaymentDate = DateTime.UtcNow;
+                maintenanceFee.IsPaid = true;
+
+                _context.PaymentNotifications.Add(paymentNotification);
+                _context.MaintenanceFees.Update(maintenanceFee);
+                await _context.SaveChangesAsync();
+                successResult.Message = "aidat ödemesi için ödeme bildirimi oluşturuldu";
+            }
+            else if(dto.SpecialFeeId != 0) {
+                var specialFee = _context.ResidentsSpecificFees.FirstOrDefault(mf => mf.Id == dto.SpecialFeeId && mf.ResidentId == apartmentResidentId && mf.IsPaid == false);
+                if(specialFee == null) {
+                    throw new ArgumentException("Ödenmemiş aidat bulunamadı.");
+                }
+                var apartmentResident = _context.ApartmentResidents.FirstOrDefault(ar => ar.Id == apartmentResidentId);
+                var apartment = _context.Apartments.FirstOrDefault(x => x.Id == specialFee.ApartmentId);
+
+                if(apartmentResident == null) {
+                    throw new ArgumentException("Apartman sakini bulunamadı.");
+                }
+                if(apartment == null) {
+                    throw new ArgumentException("Apartman bulunamadı.");
+                }
+                var paymentNotification = new PaymentNotifications {
+                    MaintenanceFeeId = null,
+                    SpecialFeeId = dto.SpecialFeeId,
+                    ApartmentId = specialFee.ApartmentId,
+                    ResidentId = apartmentResidentId,
+                    ManagerId = apartment.ManagerId,
+                    Amount = specialFee.Amount,
+                    DueDate = specialFee.DueDate,
+                    NotificationMessage = dto.NotificationMessage,
+                    ReceiptUrl = dto.ReceiptUrl,
+                    // navigation properties
+                    ResidentsSpecificFee = specialFee,
+                    MaintenanceFee = null, // çünkü bu bir özel ücret ödemesi
+                    Apartment = apartment,
+                    ApartmentResident = apartmentResident
+
+                };
+                _context.PaymentNotifications.Add(paymentNotification);
+                _context.ResidentsSpecificFees.Update(specialFee);
+                await _context.SaveChangesAsync();
+                successResult.Message = "özel ücret ödemesi için ödeme bildirimi oluşturuldu";
+            }
+            else {
+                throw new ArgumentException("Ödeme bildirimi oluşturulamadı. Lütfen geçerli bir aidat ya da özel ücret ID'si girin.");
+            }
+
+            return Ok(successResult);
         }
+        [HttpPut("UpdatePaymentNotification")]
+        public async Task<IActionResult> UpdateMyPaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
+            var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
+            if(paymentNotification == null) {
+                throw new ArgumentException("Ödeme bildirimi bulunamadı.");
+            }
+            if(paymentNotification.Status != PaymentStatus.Beklemede) {
+                throw new ArgumentException("Ödeme bildirimi zaten onaylandı ya da reddedildi.");
+            }
+            paymentNotification.NotificationMessage = dto.NotificationMessage;
+            paymentNotification.ReceiptUrl = dto.ReceiptUrl;
 
+            _context.PaymentNotifications.Update(paymentNotification);
+            await _context.SaveChangesAsync();
 
+            return Ok(new SuccessResult {
+                Message = "Ödeme bildirimi başarılı bir şekilde güncellendi."
+            });
+        }
+        [HttpGet("getMyPaymentNotification")]
+        public async Task<IActionResult> GetMyPaymentNotification() {
+            int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var myPaymentNotifications = await _context.PaymentNotifications.Where(x => x.ResidentId == apartmentResidentId).ToListAsync();
+            return Ok(myPaymentNotifications);
+        }
 
 
 

@@ -4,6 +4,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250718143501_AddingManagerIdToPaymentNotifications")]
+    partial class AddingManagerIdToPaymentNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -251,7 +254,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("MaintenanceFeeId")
+                    b.Property<int>("MaintenanceFeeId")
                         .HasColumnType("int");
 
                     b.Property<int>("ManagerId")
@@ -269,12 +272,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("ReceiptUrl")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("ResidentId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SpecialFeeId")
+                    b.Property<int>("SpecialFeeId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -445,7 +449,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                     b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.MaintenanceFee", "MaintenanceFee")
                         .WithMany()
                         .HasForeignKey("MaintenanceFeeId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ApartmentResident", "ApartmentResident")
                         .WithMany()
@@ -456,7 +461,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Migrations
                     b.HasOne("MelihAkıncı_webTabanliAidatTakipSistemi.Models.ResidentsSpecificFee", "ResidentsSpecificFee")
                         .WithMany()
                         .HasForeignKey("SpecialFeeId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Apartment");
 

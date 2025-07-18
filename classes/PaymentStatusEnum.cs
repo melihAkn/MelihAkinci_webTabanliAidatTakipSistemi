@@ -1,7 +1,7 @@
 ﻿namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
     public class PaymentStatusEnum {
         public enum PaymentStatus {
-            Onaylandi,
+            onaylandi,
             Beklemede,
             Reddedildi
         }

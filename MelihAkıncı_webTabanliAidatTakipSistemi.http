@@ -1,5 +1,7 @@
 @MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress = http://localhost:5263
 @apartmentMananagerToken = 
+
+
 ###
 
 GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/GetUserRoleId
@@ -12,7 +14,7 @@ Content-Type: application/json
 
 {
     "username": "melihaeeekinci",
-    "password": "1234sad5678"
+    "password": "melihakn"
 }
 ###
 
@@ -35,7 +37,7 @@ Content-Type: application/json
 
 {
   "username" : "melihaeeekinci",
-  "password" : "melihakn"
+  "password" : "melihakn2"
 }
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
@@ -230,10 +232,41 @@ Authorization: Bearer {{apartmentMananagerToken}}
   "reportDate" : "2025-08-28"
 
 }
+
+
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/getPaymentNotifications
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+
+}
+
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/AllowPayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "paymentNotificationId" : 3,
+  "message" : "güzel"
+}
+
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/DenyPayment
+Content-Type: application/json
+Authorization: Bearer {{apartmentMananagerToken}}
+
+{
+  "paymentNotificationId" : 3,
+  "message" : "dekont yok"
+}
+
+
 ###
 // -------------------------------------------------- Apartment Resident routes ------------------------------------------
 @apartmentResidentToken = 
-
 ###
 POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/resident/login 
 Content-Type: application/json
@@ -287,34 +320,48 @@ Authorization: Bearer {{apartmentResidentToken}}
 }
 
 ###
-POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/payMyMaintenanceFee
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/CreatePaymentNotification
 Content-Type: application/json
 Authorization: Bearer {{apartmentResidentToken}}
 
 {
-  "maintenanceFeeId" : 4
+  "SpecialFeeId" : 3,
+  "NotificationMessage" : "aidat"
+}
+
+
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/CreatePaymentNotification
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
+
+{
+  "maintenanceFeeId" : 27,
+  "notificationMessage" : "aidat"
 
 }
 
 ###
-POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/payMySpecialFee
+PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/UpdatePaymentNotification
 Content-Type: application/json
 Authorization: Bearer {{apartmentResidentToken}}
 
 {
-  "specialFeeId" : 2
+  "paymentNotificationId" : 3,
+  "notificationMessage" : "aidat ödemesi"
 
 }
 
 
 
+###
+GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/resident/getMyPaymentNotification
+Content-Type: application/json
+Authorization: Bearer {{apartmentResidentToken}}
 
+{
 
-
-
-
-
-
+}
 
 
 

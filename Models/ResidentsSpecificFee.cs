@@ -1,4 +1,5 @@
-﻿using static MelihAkıncı_webTabanliAidatTakipSistemi.classes.PaymentStatusEnum;
+﻿using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
+using static MelihAkıncı_webTabanliAidatTakipSistemi.classes.PaymentStatusEnum;
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.Models {
     public class ResidentsSpecificFee {
@@ -12,7 +13,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Models {
         public DateTime? PaymentDate { get; set; } = null;
         public required DateTime DueDate { get; set; }
         public bool IsPaid { get; set; } = false;
-        public PaymentStatus Status { get; set; } = PaymentStatus.Beklemede;
         public required ApartmentResident ApartmentResident { get; set; } // Navigation Property
 
     }
