@@ -21,7 +21,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         private readonly AppDbContext _context = context;
         private readonly PasswordHash passwordHash = new PasswordHash();
         private readonly SanitizeAndValidate sanitizeAndValidate = new SanitizeAndValidate();
-
+        private readonly EmailActions emailAction = new EmailActions();
+        private readonly GetNthMonth28Day getNthMonth28Day = new GetNthMonth28Day();
         /*
          * bilgilerini guncelleyebilme / put -------------------------------------------------- done
          * apartman ekleme / post -------------------------------------------------- done
@@ -40,7 +41,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok("rota çalışıyor");
         }
 
-        [HttpGet("GetUserRole")]
+        [HttpGet("get-user-role")]
         public IActionResult GetUserRole() {
             // yöneticinin bilgilerini getirme işlemi
             var token = Request.Cookies["accessToken"];
@@ -59,7 +60,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpGet("getUserInfos")]
+        [HttpGet("get-user-infos")]
         public async Task<IActionResult> GetUserInfos() {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentManager = await _context.ApartmentManagers.FindAsync(apartmentManagerId);
@@ -76,7 +77,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(apartmanManagerInfos);
         }
 
-        [HttpGet("getApartments")]
+        [HttpGet("get-apartments")]
         public async Task<IActionResult> GetApartments() {
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var managerApartments = await _context.Apartments
@@ -99,7 +100,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(managerApartments);
         }
         // yöneticinin apartmanına ait daireleri ve o dairelerde ki kat maliklerini getirme işlemi
-        [HttpPost("getApartmentsUnits")]
+        [HttpPost("get-apartment-units")]
         public async Task<IActionResult> GetApartmentUnitWithResidentsOrWithout([FromBody] ApartmentIdDto dto) {
             // client'dan gelen apartman id değerinin input validator sınıfı ile belirlenen aralıkta olup olmadıgının kontrolü varsayılan olarak 1 ile 1 milyon arasında
             // geriye false değer dönmez o yuzden ek bir kontrole gerek yok gibi?
@@ -152,7 +153,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(apartmentUnitsWithResidents);
         }
 
-        [HttpPut("updateManagerInfos")]
+        [HttpPut("update-manager-infos")]
         public async Task<IActionResult> UpdateInfos([FromBody] ApartmentManagerDto dto) {
             // dto deperleri için input validator
             sanitizeAndValidate.IsValidText(dto.Name);
@@ -186,7 +187,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPost("addApartment")]
+        [HttpPost("add-apartment")]
         public async Task<IActionResult> AddApartment([FromBody] ApartmentDto dto) {
 
             // tum dto elemanları için input validator
@@ -255,7 +256,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         }
 
-        [HttpPut("updateApartmentInfos")]
+        [HttpPut("update-apartment-infos")]
         //apartman bilgisi guncelleme işlemi
         public async Task<IActionResult> UpdateApartment([FromBody] ApartmentDto dto) {
             //input validator
@@ -318,7 +319,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "apartman dairesi başarılı şekilde eklendi"
             });
         }
-        [HttpPost("updateApartmentUnit")]
+        [HttpPost("update-apartment-unit")]
         public async Task<IActionResult> UpdateApartmentUnit([FromBody] ApartmentUnitDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -341,7 +342,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPost("setApartmentResidentToAnUnit")]
+        [HttpPost("set-apartment-resident-to-an-unit")]
         public async Task<IActionResult> SetApartmentResidentToAnUnit([FromBody] setResidentToApartmentUnitDto dto) {
             // input validator
             sanitizeAndValidate.IsValidText(dto.Name);
@@ -400,21 +401,24 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 ResidentId = apartmentResident.Id,
                 ApartmentId = apartmentUnit.ApartmentId,
                 Amount = apartmentUnit.Apartment.MaintenanceFeeAmount,
-                DueDate = GetNextMonth28thDay(), // bir sonraki ayın 28'i son ödeme tarihi
+                DueDate = getNthMonth28Day.GetDueDate(1), // bir sonraki ayın 28'i son ödeme tarihi
                 IsPaid = false,
                 ApartmentResident = apartmentResident
             };
             _context.MaintenanceFees.Add(apartmentMaintenanceFee);
             // veri eklendikten sonra mail adresine giriş bilgileri gönderilecek
             var apartmentManager = _context.ApartmentManagers.Find(int.Parse(User.FindFirst("id")?.Value ?? "0"));
-            var emailAction = new EmailActions();
-            var sendEmail = emailAction.SendEmail(apartmentManagerName: $"{apartmentManager!.Name}",
-                targetMailAddress: dto.Email,
-                address: apartmentUnit.Apartment.Address,
-                floor: apartmentUnit.FloorNumber + 1,
-                unitNumber: apartmentUnit.ApartmentNumber,
-                username: createdUsername,
-                password: randomlyCreatedPassword);
+
+            string mailSubject = "Web Tabanlı Aidat Takip Sistemi - Kat Maliki Ekleme";
+            string mailBody = $"""
+                            Merhaba, {apartmentManager!.Name} sizi web tabanlı aidat takip sistemin de şu adres {apartmentUnit.Apartment.Address} de ki şu kat {apartmentUnit.FloorNumber + 1} şu daire nolu {apartmentUnit.ApartmentNumber} daireye kat maliki olarak ekledi.
+                            Sisteme giriş yapablimeniz için giriş bilgileriniz:
+                            kullanıcı adınız : {createdUsername}
+                            şifreniz : {randomlyCreatedPassword}
+                            eğer bu işlem bilginiz dahilinde değilse bize bu mail adresinden bildirin
+                        """;
+
+            var sendEmail = emailAction.SendEmail(dto.Email, mailSubject, mailBody);
             if(!sendEmail) {
                 throw new ArgumentException("E-posta gönderilirken bir hata oluştu. verileri tekrar eklemeniz gerekiyor");
             }
@@ -428,15 +432,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "Kat maliki başarılı bir şekilde eklendi."
             });
         }
-        public static DateTime GetNextMonth28thDay() {
-            // verilen tarihin bir sonraki ayının 28. ci gününü döndürür
-            int year = DateTime.UtcNow.Year;
-            int month = DateTime.UtcNow.AddMonths(1).Month;
-            int day = 28;
-            DateTime date = new DateTime(year, month, day);
-            string fullTime = date.ToString("yyyy/MM/dd");
-            return DateTime.Parse(fullTime);
-        }
+       
         public static string GenerateRandomPassword(int length = 12) {
             const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+[]{}|;:,.<>?";
             Random random = new Random();
@@ -451,7 +447,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         // apartmanın tamamına aidat ekleme yani toplu aidat ekleme
         // birde bunun aylık olarak otomatik yapılması lazım ama birden fazla olmaması için veritabanında isMaintenanceFeeAdded gibi bir alan eklenebilir
         // ama onun da her ay yeniden false yapılması lazım
-        [HttpPost("setMaintenanceFeeToAllResidents")]
+        [HttpPost("set-maintenance-fee-to-all-residents")]
         public async Task<IActionResult> SetMaintenanceFeeToApartment([FromBody] ApartmentIdDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -474,14 +470,14 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             // ya da apartman'a kat maliklerine aidat eklendi mi gibi bir alan ekleyebiliriz ama bunu her ay false olarak ayarlamamız gerekir
 
             foreach(var resident in apartmentResidents) {
-                var findApartmentResidentMaintenanceFee = await _context.MaintenanceFees.Where(x => x.ResidentId == resident.Id && x.DueDate == GetNextMonth28thDay()).FirstOrDefaultAsync();
+                var findApartmentResidentMaintenanceFee = await _context.MaintenanceFees.Where(x => x.ResidentId == resident.Id && x.DueDate == getNthMonth28Day.GetDueDate(1)).FirstOrDefaultAsync();
                 // eğer veritabanında birdaha ki ayın 28 ini içeren kayıt yoksa yeni aidat kaydı yapılır tum kat maliklerine
                 if(findApartmentResidentMaintenanceFee == null) {
                     var maintenanceFee = new MaintenanceFee {
                         ResidentId = resident.Id,
                         ApartmentId = apartment.Id,
                         Amount = apartment.MaintenanceFeeAmount,
-                        DueDate = GetNextMonth28thDay(), // bir sonraki ayın 28'i son ödeme tarihi
+                        DueDate = getNthMonth28Day.GetDueDate(1), // bir sonraki ayın 28'i son ödeme tarihi
                         IsPaid = false,
                         ApartmentResident = resident
                     };
@@ -494,7 +490,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPost("setSpecificFeeToApartmentResident")]
+        [HttpPost("set-specific-fee-to-apartment-resident")]
         public async Task<IActionResult> SetSpecificDebtToAnResident([FromBody] ResidentSpecificFeeDto dto) {
             // input validator
             sanitizeAndValidate.IsValidText(dto.Name);
@@ -514,7 +510,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Amount = dto.Amount,
                 ResidentId = apartmentResident!.Id,
                 ApartmentId = apartmentResident.ApartmentUnit!.ApartmentId,
-                DueDate = GetNextMonth28thDay(),
+                DueDate = getNthMonth28Day.GetDueDate(1),
                 ApartmentResident = apartmentResident!
             };
 
@@ -525,7 +521,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPost("getUnPaidMaintenanceFees")]
+        [HttpPost("get-un-paid-maintenance-fees")]
         public async Task<IActionResult> GetUnPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -559,7 +555,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
         }
 
-        [HttpPost("getUnPaidSpecialFees")]
+        [HttpPost("get-un-paid-special-fees")]
         public async Task<IActionResult> GetUnPaidSpecialFees([FromBody] ApartmentIdDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -590,7 +586,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(getUnPaidSpecialFees);
         }
 
-        [HttpPost("getAllPaidMaintenanceFees")]
+        [HttpPost("get-all-paid-maintenance-fees")]
         public async Task<IActionResult> GetAllPaidMaintenanceFees([FromBody] ApartmentIdDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -619,7 +615,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(getPaidMaintenanceFees);
         }
-        [HttpPost("getAllPaidSpecialFees")]
+        [HttpPost("get-all-paid-special-fees")]
         public async Task<IActionResult> GetAllPaidSpecificFees([FromBody] ApartmentIdDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -679,7 +675,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
 
         }
-        [HttpPost("getPaymentNotifications")]
+        [HttpPost("get-payment-notifications")]
         public IActionResult PaymentNotifications([FromBody] ApartmentIdDto dto) {
             // aidat ya da özel ücret ödemesi yapıldıktan sonra yöneticinin onayına sunulacak
             // yani yönetici yapılan ödemeleri göreblicek ve ilgili rotalardan onaylayabilecek ya da reddedebilecek
@@ -741,7 +737,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(paymentNotification);
         }
-        [HttpPost("allowPayment")]
+        [HttpPost("allow-payment")]
         public async Task<IActionResult> AllowPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
             sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
             sanitizeAndValidate.IsValidText(dto.Message);
@@ -756,7 +752,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(new SuccessResult { Message = "ödeme başarılı bir şekilde onaylandı" });
         }
-        [HttpPost("denyPayment")]
+        [HttpPost("deny-payment")]
         public async Task<IActionResult> DenyPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
             sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
             sanitizeAndValidate.IsValidText(dto.Message);
@@ -775,7 +771,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
 
-        [HttpPost("getMonthlyMaintenanceFeeReport")]
+        [HttpPost("get-monthly-maintenance-fee-report")]
         public async Task<IActionResult> GetMonthlyMaintenanceFeeReport([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
 
             // input validate
@@ -843,7 +839,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(maintenanceFeeReport);
 
         }
-        [HttpPost("getMonthlySpecialFeeReport")]
+        [HttpPost("get-monthly-special-fee-report")]
         public async Task<IActionResult> GetMonthlySpecialFeeReport([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
             // input validate
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -911,7 +907,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
 
-        [HttpPost("getMonthlyMaintenanceFeeReportForApartment")]
+        [HttpPost("get-monthly-maintenance-fee-report-for-apartment")]
         public async Task<IActionResult> GetMonthlyMaintenanceFeeReportForApartment([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
             // veritabanın da ki alanın değeri bu 2025-08-28 00:00:00.000000 arama bu şekilde düzgün geliyor SELECT * FROM webtabanliaidatyonetimsistemi.maintenancefees where DueDate = '2025-08-28'
             // input validate
@@ -971,7 +967,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(maintenanceFeeReport);
         }
 
-        [HttpPost("getMonthlySpecialFeeReportForApartment")]
+        [HttpPost("get-monthly-special-fee-report-for-apartment")]
         public async Task<IActionResult> GetMontlySpecialFeeReports([FromBody] MontlyMaintenanceOrSpecialfeeReportDto dto) {
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
             // rapor için gereken bilgilerin çekilmesi burada select ile sadece gereken bilgiler çekilmeli
@@ -1027,6 +1023,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
             return Ok(specialFeeReport);
         }
+
+
 
 
     }

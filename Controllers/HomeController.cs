@@ -12,17 +12,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
 
+
         public HomeController(IConfiguration configuration, AppDbContext context) {
             _configuration = configuration;
             _context = context;
         }
-
-        [HttpGet]
-        public IActionResult Index() {
-            // Şimdilik sadece test amaçlı
-            return Content("HomeController çalışıyor.");
-        }
-        // tum kullanıcıların sisteme girş yapabilmesi için
         //sadece apartman yoneticileri sisteme kayıt olabilir
         //kullanıcılar için yonetici o daireye kullanıcı eklediği zaman e posta ile kullanıcı adı ve şifre bilgileri gonderilecek ve ilk giriş yaptığında şifresini ve kullanıcı bilgilerini güncellemesi istenecek
         [HttpPost("register")]
@@ -32,7 +26,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(role is null) {
                 return BadRequest("Rol bulunamadı.");
             }
-
             // mail adresi geçerli mi kontrol etmeliyiz
 
             //tum değerlerin doldurulması zorunlu
@@ -44,7 +37,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 string.IsNullOrWhiteSpace(dto.Password)) {
                 return BadRequest("Zorunlu alanlar boş bırakılamaz.");
             }
-
 
             // değerlerin veritabanına eklenmeden önce trim ile başında ki ve sonunda ki boşlukların silinmesi
             dto.Name = dto.Name.Trim();
@@ -82,6 +74,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Content("Kayıt Başarılı!");
         }
+
+
+
+
 
     }
 }

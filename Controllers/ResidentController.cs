@@ -36,7 +36,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return View();
         }
 
-        [HttpGet("GetUserRoleId")]
+        [HttpGet("get-user-role-id")]
         public IActionResult GetUserRoleId() {
             // yöneticinin bilgilerini getirme işlemi
             var token = Request.Cookies["accessToken"];
@@ -55,7 +55,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             });
         }
 
-        [HttpPut("updateResidentInfos")]
+        [HttpPut("update-resident-infos")]
         public async Task<IActionResult> UpdateInfos([FromBody] ApartmentResidentDto dto) {
             // input validation
             sanitizeAndValidate.IsValidText(dto.Name);
@@ -88,7 +88,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "Bilgiler güncellendi."
             });
         }
-        [HttpGet("myApartmentUnit")]
+        [HttpGet("my-apartment-unit")]
         public async Task<IActionResult> GetMyApartmentUnit() {
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentResident = await _context.ApartmentResidents.FindAsync(apartmentResidentId);
@@ -103,7 +103,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(residentApartmentUnit);
 
         }
-        [HttpGet("myApartmentUnitMaintenanceFees")]
+        [HttpGet("my-apartment-unit-maintenance-fees")]
         //tum apartman iadatlarını getirir burada da sayfalama gerekiyor
         public async Task<IActionResult> GetMyApartmentUnitPayments() {
             List<GetMyApartmentUnitPaymentsDto> myMaintenanceFees = new List<GetMyApartmentUnitPaymentsDto>();
@@ -127,7 +127,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(myMaintenanceFees);
         }
 
-        [HttpGet("myApartmentUnitSpecialFees")]
+        [HttpGet("my-apartment-unit-special-fees")]
         public async Task<IActionResult> GetMyApartmentUnitSpecialFees() {
             List<GetMyApartmentUnitSpecialFeesDto> mySpecialFees = new List<GetMyApartmentUnitSpecialFeesDto>();
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
@@ -149,7 +149,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
             return Ok(mySpecialFees);
         }
-        [HttpPost("CreatePaymentNotification")]
+        [HttpPost("create-payment-notification")]
         public async Task<IActionResult> CreatePaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
             // ödeme bildirimi yapıldıktan sonra ödeme durumu beklemede olarak ayarlanacak
 
@@ -251,7 +251,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
 
             return Ok(successResult);
         }
-        [HttpPut("UpdatePaymentNotification")]
+        [HttpPut("update-payment-notification")]
         public async Task<IActionResult> UpdateMyPaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
             var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
             if(paymentNotification == null) {
@@ -270,12 +270,16 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "Ödeme bildirimi başarılı bir şekilde güncellendi."
             });
         }
-        [HttpGet("getMyPaymentNotification")]
-        public async Task<IActionResult> GetMyPaymentNotification() {
+        [HttpGet("get-my-payment-notifications")]
+        public async Task<IActionResult> GetMyPaymentNotifications() {
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var myPaymentNotifications = await _context.PaymentNotifications.Where(x => x.ResidentId == apartmentResidentId).ToListAsync();
             return Ok(myPaymentNotifications);
         }
+
+        
+
+
 
 
 

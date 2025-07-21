@@ -50,10 +50,12 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
             return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(\+90|0)?5\d{9}$") ? true : throw new ArgumentException("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
         }
         public bool IsValidPassword(string password, int minLength = 8, int maxLength = 256) {
+            Console.WriteLine("şifre kontrol ediliyor");
+            Console.WriteLine(password);
             if(string.IsNullOrWhiteSpace(password)) {
                 throw new ArgumentException("şifre boş olamaz");
             }
-            if(password.Length > 8 && password.Length < 256) {
+            if(password.Length < minLength && password.Length > maxLength) {
                 throw new ArgumentException($"şifre {minLength} ile {maxLength} arasında olmak zorunda");
             }
             return true;

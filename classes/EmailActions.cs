@@ -5,7 +5,7 @@ using System.Net.Mail;
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
     public class EmailActions {
         // burada dto kullanılabilir
-        public Boolean SendEmail(string apartmentManagerName, string targetMailAddress, string address, int floor, int unitNumber, string username, string password) {
+        public Boolean SendEmail(string targetMailAddress, string mailSubject, string mailBody) {
             try {
                 using(var client = new SmtpClient()) {
                     client.Host = Env.GetString("EMAIL_HOST");
@@ -20,17 +20,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
                         to: new MailAddress(targetMailAddress, targetMailAddress[..5])
                         )) {
 
-                        message.Subject = "web tabanlı aidat takip sistemi apartman ataması";
-                        message.Body =
-                            $"""
-                            Merhaba, {apartmentManagerName} sizi web tabanlı aidat takip sistemin de şu adres {address} de ki şu kat {floor} şu daire nolu {unitNumber} daireye kat maliki olarak ekledi.
-                            Sisteme giriş yapablimeniz için giriş bilgileriniz:
-                            kullanıcı adınız : {username}
-                            şifreniz : {password}
-
-                            eğer bu işlem bilginiz dahilinde değilse bize bu mail adresinden bildirin
-                            webtabanliaidaat@gmail.com
-                        """;
+                        message.Subject = mailSubject;
+                        message.Body = mailBody;
 
                         client.Send(message);
                         return true;
@@ -41,8 +32,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
                 Console.WriteLine($"Email gönderilirken hata oluştu: {ex.Message}");
                 return false;
             }
-
-
         }
     }
 }

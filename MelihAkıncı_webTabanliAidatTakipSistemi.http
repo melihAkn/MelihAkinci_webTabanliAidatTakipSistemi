@@ -2,6 +2,7 @@
 @apartmentMananagerToken = 
 
 
+
 ###
 
 GET {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/GetUserRoleId
@@ -37,7 +38,7 @@ Content-Type: application/json
 
 {
   "username" : "melihaeeekinci",
-  "password" : "melihakn2"
+  "password" : "deneme123456"
 }
 ###
 PUT {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/manager/updateManagerInfos
@@ -263,6 +264,8 @@ Authorization: Bearer {{apartmentMananagerToken}}
   "message" : "dekont yok"
 }
 
+###
+
 
 ###
 // -------------------------------------------------- Apartment Resident routes ------------------------------------------
@@ -371,5 +374,22 @@ Authorization: Bearer {{apartmentResidentToken}}
 
 
 
+-------------------------------------------------- forgot password routes ------------------------------------------
 
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/ManagerForgotPassword
+Content-Type: application/json
 
+{
+  "email": "mail"
+}
+
+###
+POST {{MelihAkıncı_webTabanliAidatTakipSistemi_HostAddress}}/auth/ManagerResetPassword
+Content-Type: application/json
+Authorization: Bearer 
+
+{
+  "password" : "deneme123456"
+
+}
