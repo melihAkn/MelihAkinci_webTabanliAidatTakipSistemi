@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom'
 const LoginPage = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState(3)
+  const [role, setRole] = useState()
   const navigate = useNavigate()
-    const dumyUsername = "melihaeeekinci"
-    const dummyPassword = "melihakn"
+    const managerUsername = "melihaeeekinci"
+    const managerPassword = "deneme123456"
+    const ResidentUsername = "mehmet.kut8752"
+    const ResidentPassword = "deneme123"
   const handleLogin = async () => {
     const endpoint =
   role === "apartmentManager"
@@ -20,10 +22,10 @@ const LoginPage = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // HttpOnly cookie için şart
+        credentials: "include",
         body: JSON.stringify({ 
-            "username" : dumyUsername,
-            "password" : dummyPassword })
+            "username" : ResidentUsername,
+            "password" : ResidentPassword })
       })
 
       if (!res.ok) {
@@ -32,12 +34,10 @@ const LoginPage = () => {
         return
       }
 
-      // Giriş başarılı → Kullanıcı bilgilerini al
-
       const getUserInfosEndpoint =
       role === "apartmentManager"
-        ? 'http://localhost:5263/manager/GetUserRole'
-        : 'http://localhost:5263/resident/GetUserRole'
+        ? 'http://localhost:5263/manager/get-user-role'
+        : 'http://localhost:5263/resident/get-user-role'
 
       const infoRes = await fetch(getUserInfosEndpoint, {
         method: 'GET',
@@ -74,7 +74,7 @@ const LoginPage = () => {
 
       <input
         placeholder="Kullanıcı adı"
-        value={dumyUsername}
+        value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
       <br />
@@ -82,7 +82,7 @@ const LoginPage = () => {
       <input
         placeholder="Şifre"
         type="password"
-        value={dummyPassword}
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
       <br />

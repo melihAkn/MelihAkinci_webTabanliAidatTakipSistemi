@@ -6,7 +6,6 @@ import UpdateApartmentUnitForm from "./updateApartmentUnitForm"
 import UpdateResidentForm from "./updateResidentForm"
 
 
-
 const GetApartmentUnit = ({ data }) => {
   const [showSpecialFeeForm, setShowSpecialFeeForm] = useState(false)
   const [showUpdateApartmentUnitForm, setShowUpdateApartmentForm] = useState(false)
@@ -23,7 +22,7 @@ const GetApartmentUnit = ({ data }) => {
 
   const handleAddApartmentResidentSubmit = async (residentData) => {
     try {
-      const res = await fetch('http://localhost:5263/manager/setApartmentResidentToAnUnit', {
+      const res = await fetch('http://localhost:5263/manager/set-apartment-resident-to-an-unit', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +43,7 @@ const GetApartmentUnit = ({ data }) => {
 
   const handleSubmitFee = async (feeData) => {
     try {
-      const res = await fetch('http://localhost:5263/manager/setSpecificFeeToApartmentResident', {
+      const res = await fetch('http://localhost:5263/manager/set-specific-fee-to-apartment-resident', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

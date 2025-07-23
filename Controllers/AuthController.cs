@@ -54,11 +54,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 string apartmentMananagerToken = jwtToken.GenerateJwtToken(dto.Username, apartmanManagerRole.Role, apartmentManager.Id);
                 Response.Cookies.Append("accessToken", apartmentMananagerToken, new CookieOptions {
                     HttpOnly = true,
-                    Secure = true,
                     SameSite = SameSiteMode.Strict,
                 });
-                Console.WriteLine(apartmentMananagerToken);
-                //return Ok(new { apartmentMananagerToken = apartmentMananagerToken });
             }
             return Ok(new SuccessResult {
                 Message = "giriş başarılı"
@@ -85,14 +82,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 if(apartmentResidentRole is null) {
                     throw new ArgumentException("Rol bulunamadı.");
                 }
-
+                
                 string apartmentResidentToken = jwtToken.GenerateJwtToken(dto.Username, apartmentResidentRole.Role, apartmentResident.Id);
                 Response.Cookies.Append("accessToken", apartmentResidentToken, new CookieOptions {
                     HttpOnly = true,
-                    Secure = false,
                     SameSite = SameSiteMode.Strict
                 });
-
+                Console.WriteLine(apartmentResidentToken);
 
                 // async gerekebilir
 
@@ -102,7 +98,28 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "giriş başarılı"
             });
         }
+        [HttpGet("manager/logout")]
+        public IActionResult ManagerLogout() {
+            // tokenin son geçerlilik tarihini ayarlayarak logout işlemi
+            Response.Cookies.Append("accessToken", "", new CookieOptions {
+                Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                HttpOnly = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/"
+            });
+            return Ok("başarılı bir şekilde çıkış yapıldı");
+        }
+        [HttpGet("resident/logout")]
+        public IActionResult ResidentLogout() {
 
+            Response.Cookies.Append("accessToken", "", new CookieOptions {
+                Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                HttpOnly = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/"
+            });
+            return Ok("başarılı bir şekilde çıkış yapıldı");
+        }
 
         [HttpPost("manager-forgot-password")]
         public async Task<IActionResult> ManagerForgotPassword([FromBody] ForgotPasswordDto dto) {
@@ -139,8 +156,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(dto.Password == null) {
                 throw new ArgumentException("şifre boş olamaz");
             }
-            Console.WriteLine("sdsadsadsadsadsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            Console.WriteLine(dto.Password);
             sanitizeAndValidate.IsValidPassword(dto.Password);
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             var apartmentManager = _context.ApartmentManagers.FirstOrDefault(x => x.Id == apartmentManagerId);
@@ -199,6 +214,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             ApartmentResident.Password = hashedPassword;
             await _context.SaveChangesAsync();
             return Ok(new SuccessResult { Message = "Şifre sıfırlama işlemi başarılı" });
+
         }
     }
 }

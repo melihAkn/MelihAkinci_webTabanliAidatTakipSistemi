@@ -22,7 +22,7 @@ const AddApartmentCard = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5263/manager/addApartment', {
+      const res = await fetch('http://localhost:5263/manager/add-apartment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

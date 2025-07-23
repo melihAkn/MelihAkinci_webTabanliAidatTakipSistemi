@@ -47,7 +47,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
         public bool IsValidPhoneNumber(string phoneNumber) {
             // regex den emin değilim o yuzden iyice öğrenmem lazım bu regex i
             if(string.IsNullOrWhiteSpace(phoneNumber)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(\+90|0)?5\d{9}$") ? true : throw new ArgumentException("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
+            return phoneNumber.Length > 0 && phoneNumber.Length <= 15;
+            //return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(\+90|0)?5\d{9}$") ? true : throw new ArgumentException("geçersiz telefon numarası");
         }
         public bool IsValidPassword(string password, int minLength = 8, int maxLength = 256) {
             Console.WriteLine("şifre kontrol ediliyor");
@@ -69,7 +70,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
         }
         public bool IsValidDecimal(decimal number, decimal minValue = 0, decimal maxValue = 1000000) {
 
-            return number >= minValue && number <= maxValue ? true : throw new ArgumentException("apartman bulunamadı ve ya yöneticisi olduğunuz apartman yok");
+            return number >= minValue && number <= maxValue ? true : throw new ArgumentException("geçersiz sayı girildi");
         }
     }
 }

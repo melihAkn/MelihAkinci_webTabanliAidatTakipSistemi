@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import './ManagerDashboard.css'
 import Card from '../../components/card'
-import AddApartmentCard from '../../components/addApartmentCard'
-import UpdateManagerInfoCard from '../../components/UpdateManagerInfoCard'
-import ApartmentCard from '../../components/apartmentCard'
-import GetApartmentUnit from '../../components/getApartmentUnitsCard'
+import AddApartmentCard from '../../components/manager/addApartmentCard'
+import UpdateManagerInfoCard from '../../components/manager/UpdateManagerInfoCard'
+import ApartmentCard from '../../components/manager/apartmentCard'
+import GetApartmentUnit from '../../components/manager/getApartmentUnitsCard'
+import ResidentsPaymentNotificationsCard from '../../components/manager/ResidentsPaymentNotificationsCard'
 const ManagerDashboard = () => {
   const [cards, setCards] = useState([])
-  const updateInfos = async (endpoint) => {
+  const updateInfos = async () => {
     try {
       setCards([<UpdateManagerInfoCard key="update-Manager-info" />])
     } catch (err) {
@@ -15,7 +16,29 @@ const ManagerDashboard = () => {
     }
   }
 
+  const logout = async () => {
+try {
+      const res = await fetch('http://localhost:5263/auth/manager/logout', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      if (!res.ok) {
+        alert('çıkış yapma başarısız')
+        return
+      }else{
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Silme hatası:', err)
+    }
 
+
+
+
+  }
   const addApartment = async () => {
     try {
       setCards([<AddApartmentCard key="add-apartment" />])
@@ -23,7 +46,13 @@ const ManagerDashboard = () => {
       console.error(err)
     }
   }
-
+  const myPaymentNotifications = async () => {
+    try {
+      setCards([<ResidentsPaymentNotificationsCard key="my-payment-notifications" onAction={handleApartmentAction} />])
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const getApartments = () => {
     setCards([
@@ -37,7 +66,7 @@ const ManagerDashboard = () => {
     console.log('Özel ücret tanımlama isteği geldi:', cardData)
     // Burada modal açabilir, form gösterebilir veya başka state güncelleyebilirsin.
     try {
-      const res = await fetch('http://localhost:5263/manager/setSpecificFeeToApartmentResident', {
+      const res = await fetch('http://localhost:5263/manager/set-specific-fee-to-apartment-resident', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -65,12 +94,12 @@ const ManagerDashboard = () => {
 
 
   }
-  const handleApartmentAction = async (action, apartmentId) => {
+  const handleApartmentAction = async (action, apartmentId, notificationId, denyMessage) => {
     switch (action) {
       case 'delete':
         if (window.confirm('Apartmanı silmek istediğinize emin misiniz?')) {
           try {
-            const res = await fetch('http://localhost:5263/manager/deleteApartment', {
+            const res = await fetch('http://localhost:5263/manager/delete-apartment', {
               method: 'DELETE',
               credentials: 'include',
               headers: {
@@ -96,7 +125,7 @@ const ManagerDashboard = () => {
 
       case 'unPaidMaintenanceFees':
         try {
-          const res = await fetch('http://localhost:5263/manager/getUnPaidMaintenanceFees', {
+          const res = await fetch('http://localhost:5263/manager/get-un-paid-maintenance-fees', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -114,7 +143,7 @@ const ManagerDashboard = () => {
 
       case 'unPaidSpecialFees':
         try {
-          const res = await fetch('http://localhost:5263/manager/getUnPaidSpecialFees', {
+          const res = await fetch('http://localhost:5263/manager/get-un-paid-special-fees', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -131,7 +160,7 @@ const ManagerDashboard = () => {
         break
       case 'paidMaintenanceFees':
         try {
-          const res = await fetch('http://localhost:5263/manager/getAllPaidMaintenanceFees', {
+          const res = await fetch('http://localhost:5263/manager/get-all-paid-maintenance-fees', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -149,7 +178,7 @@ const ManagerDashboard = () => {
 
       case 'paidSpecialFees':
         try {
-          const res = await fetch('http://localhost:5263/manager/getAllPaidSpecialFees', {
+          const res = await fetch('http://localhost:5263/manager/get-all-paid-special-fees', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -168,7 +197,7 @@ const ManagerDashboard = () => {
 
       case 'viewResidents':
         try {
-          const res = await fetch('http://localhost:5263/manager/getApartmentsUnits', {
+          const res = await fetch('http://localhost:5263/manager/get-apartment-units', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -195,15 +224,16 @@ const ManagerDashboard = () => {
         break
       case 'setMaintenanceFeeToAllResidents':
         try {
-          const res = await fetch('http://localhost:5263/manager/setMaintenanceFeeToAllResidents', {
+          const res = await fetch('http://localhost:5263/manager/set-maintenance-fee-to-all-residents', {
             method: 'POST',
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ apartmentId })
+            body: JSON.stringify({ notificationId })
           })
           const data = await res.json()
+          console.log(data)
           if(!res.ok){
             alert(data.detail)
           }
@@ -216,7 +246,55 @@ const ManagerDashboard = () => {
         }
         break
 
-        
+        case 'allowPaymentNotification' :
+          try{
+            console.log(notificationId)
+          const res = await fetch('http://localhost:5263/manager/allow-payment', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ "PaymentNotificationId" : notificationId })
+          })
+          const data = await res.json()
+          if(!res.ok){
+            alert(data.detail)
+            console.log(data)
+          }else{
+            alert(data.message)
+          }
+            
+          }catch(err){
+          console.error(err)
+          alert('Kat malikleri alınamadı')
+          }
+          break
+        case 'denyPaymentNotification' :
+          try{
+            console.log(notificationId)
+   const res = await fetch('http://localhost:5263/manager/deny-payment', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ "PaymentNotificationId" : notificationId , "Message" : denyMessage})
+          })
+          const data = await res.json()
+          if(!res.ok){
+            alert(data.detail)
+            console.log(data)
+          }else{
+            alert(data.message)
+          }
+
+
+          }catch(err){
+            console.error(err)
+          alert('Kat malikleri alınamadı')
+          }
+          break
       default:
         console.warn('Bilinmeyen işlem:', action)
     }
@@ -231,7 +309,8 @@ const ManagerDashboard = () => {
           <li onClick={() => updateInfos()}>bilgilerim</li>
           <li onClick={() => getApartments('manager/getApartments')}>apartmanlarım</li>
           <li onClick={() => addApartment()}>apartman ekle</li>
-
+          <li onClick={() => myPaymentNotifications()}> ödeme bildirimleri</li>
+          <li onClick={() => logout()}>çıkış yap</li>
 
         </ul>
       </div>

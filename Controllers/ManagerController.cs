@@ -5,6 +5,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -281,7 +282,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
 
         // bu tek apartman dairesi ekleme için
-        [HttpPost("addAnApartmentUnit")]
+        [HttpPost("add-an-apartment-unit")]
         public async Task<IActionResult> AddApartmentUnit([FromBody] ApartmentUnitDto dto) {
             // input validator
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
@@ -432,7 +433,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Message = "Kat maliki başarılı bir şekilde eklendi."
             });
         }
-       
+
         public static string GenerateRandomPassword(int length = 12) {
             const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+[]{}|;:,.<>?";
             Random random = new Random();
@@ -651,10 +652,10 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             paymentNotifications.ForEach(notification => {
                 paymentNotification.Add(new PaymentNotificationDto {
                     // payment notification id
-                    paymentNotificationId = notification.Id,
+                    NotificationId = notification.Id,
                     // apartment infos
                     ApartmentName = notification.Apartment!.Name,
-                    ApartmentAdress = notification.Apartment!.Address,
+                    ApartmentAddress = notification.Apartment!.Address,
                     // resident infos
                     ResidentName = notification.ApartmentResident!.Name,
                     ResidentSurname = notification.ApartmentResident!.Surname,
@@ -703,8 +704,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
              * dekont url
              * mesaj (yöneticiye iletilen mesaj)
              * 
-             * 
-             * 
              */
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
             int apartmentManagerId = int.Parse(User.FindFirst("id")?.Value ?? "0");
@@ -717,7 +716,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     .Include(x => x.ApartmentResident)
                     .Include(x => x.MaintenanceFee)
                     .Include(x => x.ResidentsSpecificFee)
-                    .Where(x => x.Status == PaymentStatus.Beklemede && x.ManagerId == apartmentManagerId)
+                    .Where(x => x.Status == PaymentStatusEnum.PaymentStatus.Beklemede && x.ManagerId == apartmentManagerId)
                     .ToList();
                 paymentNotification = GetPaymentNotifications(paymentNotifications, paymentNotification);
             }
@@ -727,7 +726,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     .Include(x => x.ApartmentResident)
                     .Include(x => x.MaintenanceFee)
                     .Include(x => x.ResidentsSpecificFee)
-                    .Where(x => x.Status == PaymentStatus.Beklemede && x.ApartmentId == dto.ApartmentId)
+                    .Where(x => x.Status == PaymentStatusEnum.PaymentStatus.Beklemede && x.ApartmentId == dto.ApartmentId)
                     .ToList();
                 paymentNotification = GetPaymentNotifications(paymentNotifications, paymentNotification);
             }
@@ -739,8 +738,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
         [HttpPost("allow-payment")]
         public async Task<IActionResult> AllowPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
+            // gelen mesaj onay durumun da boş gelebilir ama sadece burada
             sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
-            sanitizeAndValidate.IsValidText(dto.Message);
             var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
             if(paymentNotification == null) {
                 throw new ArgumentException("Ödeme bildirimi bulunamadı.");
@@ -754,11 +753,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         }
         [HttpPost("deny-payment")]
         public async Task<IActionResult> DenyPayment([FromBody] AllowOrDenyPaymentNotificationDto dto) {
+            if(string.IsNullOrWhiteSpace(dto.Message)) {
+                throw new ArgumentException("reddedilen ödeme bildirimlerinde reddetme sebebi olarak mesaj girilmesi zorunlu");
+            }
             sanitizeAndValidate.IsValidNumber(dto.PaymentNotificationId);
             sanitizeAndValidate.IsValidText(dto.Message);
-            if(string.IsNullOrWhiteSpace(dto.Message)) {
-                throw new ArgumentException("Mesaj boş olamaz.");
-            }
             var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
             if(paymentNotification == null) {
                 throw new ArgumentException("Ödeme bildirimi bulunamadı.");

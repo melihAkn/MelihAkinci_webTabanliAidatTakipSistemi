@@ -6,7 +6,7 @@
 #custom files
 to-do.md
 projectDescription.md
-
+/wwwroot/uploads
 # dotenv files
 .env
 

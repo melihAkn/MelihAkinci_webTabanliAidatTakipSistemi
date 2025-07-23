@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const UpdateManagerInfoCard = () => {
+const UpdateResidentInfoCard = () => {
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
@@ -13,7 +13,7 @@ const UpdateManagerInfoCard = () => {
     // İlk yüklemede kullanıcı bilgilerini çek
     const fetchUserInfo = async () => {
       try {
-        const res = await fetch('http://localhost:5263/manager/getUserInfos', {
+        const res = await fetch('http://localhost:5263/resident/get-user-infos', {
           method: 'GET',
           credentials: 'include'
         })
@@ -61,7 +61,7 @@ const UpdateManagerInfoCard = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5263/manager/updateManagerInfos', {
+      const res = await fetch('http://localhost:5263/resident/update-resident-infos', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -117,4 +117,4 @@ return (
 )
 }
 
-export default UpdateManagerInfoCard
+export default UpdateResidentInfoCard

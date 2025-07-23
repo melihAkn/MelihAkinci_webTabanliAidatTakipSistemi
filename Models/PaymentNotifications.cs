@@ -13,7 +13,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Models {
         public DateTime? PaymentDate { get; set; } = DateTime.UtcNow;
         public PaymentStatus Status { get; set; } = PaymentStatus.Beklemede;
         public required string NotificationMessage { get; set; } // kat malikinin ödemeyi yaparken doldurması gereken mesaj yani yönetici görecek bunu
-        public string? Message { get; set; } = null; //ödeme reddedilirse bu alan dolu olmak zorunda ama eğer onaylanırsa dolu olması şart değil
+        public string? Message { get; set; } = string.Empty; //ödeme reddedilirse bu alan dolu olmak zorunda ama eğer onaylanırsa dolu olması şart değil
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? ReceiptUrl { get; set; } = null; // dekont için url opsiyonel olabilir gibi ama o zaman da farklı sorunlar çıkabilir mentordan cevap gelsin bakacam. bunu boyle yukleme githuba
 

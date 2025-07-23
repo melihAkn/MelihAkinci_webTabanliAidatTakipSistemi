@@ -4,6 +4,7 @@
         public int SpecialFeeId { get; set; } = 0;
         public int MaintenanceFeeId { get; set; } = 0;
         public required string NotificationMessage { get; set; } = string.Empty;
-        public string? ReceiptUrl { get; set; }
+        public required IFormFile ReceiptFile { get; set; } // dekont
+        public string? ReceiptUrl { get; set; } = string.Empty;
     }
 }

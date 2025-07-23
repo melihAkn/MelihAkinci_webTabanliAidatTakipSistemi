@@ -1,6 +1,7 @@
 ﻿using MelihAkıncı_webTabanliAidatTakipSistemi.classes;
 using MelihAkıncı_webTabanliAidatTakipSistemi.Data;
 using MelihAkıncı_webTabanliAidatTakipSistemi.DTOs;
+using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         private readonly EmailActions emailAction = new EmailActions();
         private readonly GetNthMonth28Day getNthMonth28Day = new GetNthMonth28Day();
 
-        [HttpGet("notify-all-users")]
+        [HttpPost("notify-all-users")]
         public async Task<IActionResult> NotifyUsersForDueDate([FromBody] NotifyUserDto dto) {
             // ayın 21 inde ve 28 inde bildirim gönderilecek
-            if(dto.dayofMonth == 21 || dto.dayofMonth == 27 || dto.dayofMonth == 28) {
-                throw new ArgumentException("Gün numarası 21, 27 veya 28 olmalıdır");
+            if(dto.dayofMonth != 21 && dto.dayofMonth != 27 && dto.dayofMonth != 28) {
+                throw new ArgumentException("Gün numarası yalnızca 21, 25 veya 27 olabilir.");
             }
             var apartmentResidents = await _context.ApartmentResidents.ToListAsync();
             string mailSubject = string.Empty;
@@ -66,7 +67,37 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     }
                 }
             }
-            return Ok("Tüm kullanıcılara ödeme bildirimi gönderildi");
+            return Ok(new SuccessResult {
+                Message = "Tüm sakinlere bildirimler başarıyla gönderildi."
+            });
+        }
+
+        [HttpPost("set-maintenance-fee-to-all-residents")]
+        public async Task<IActionResult> SetMaintenanceFeeToAllResidents([FromBody] NotifyUserDto dto) {
+            if(dto.dayofMonth != 1) {
+                throw new Exception("Gün numarası 1 olmalıdır. Bu işlem her ayın başında yapılır.");
+            }
+            var apartmentResidents = await _context.ApartmentResidents
+                .Include(resident => resident.ApartmentUnit.Apartment)
+                .ToListAsync();
+
+            foreach(var resident in apartmentResidents) {
+                var maintenanceFee = new MaintenanceFee {
+                    ResidentId = resident.Id,
+                    ApartmentId = resident.ApartmentUnit.Apartment.Id,
+                    Amount = resident.ApartmentUnit.Apartment.MaintenanceFeeAmount,
+                    DueDate = getNthMonth28Day.GetDueDate(0),
+                    IsPaid = false,
+                    PaymentDate = null,
+                    ApartmentResident = resident
+                };
+                _context.MaintenanceFees.Add(maintenanceFee);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new SuccessResult {
+                Message = "Tüm sakinlere aidat ücreti başarıyla eklendi."
+            });
         }
     }
 }

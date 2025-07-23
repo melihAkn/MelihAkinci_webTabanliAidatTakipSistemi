@@ -13,12 +13,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
     [Authorize(Roles = "ApartmentResident")]
     [ApiController]
     [Route("[controller]")]
-    public class ResidentController(AppDbContext context) : Controller {
+    public class ResidentController(AppDbContext context, IWebHostEnvironment environment) : Controller {
 
         private readonly AppDbContext _context = context;
         private readonly PasswordHash passwordHash = new PasswordHash();
         private readonly SanitizeAndValidate sanitizeAndValidate = new SanitizeAndValidate();
-
+        private readonly FileHandler fileHandler = new FileHandler();
+        private readonly IWebHostEnvironment _environment = environment;
         /*
          * bilgilerini guncelleyebilme / put --------------------------------------- done
          * kendi dairesini gorebilme / get --------------------------------------- done
@@ -36,16 +37,14 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return View();
         }
 
-        [HttpGet("get-user-role-id")]
+        [HttpGet("get-user-role")]
         public IActionResult GetUserRoleId() {
             // yöneticinin bilgilerini getirme işlemi
             var token = Request.Cookies["accessToken"];
-            Console.WriteLine(token);
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-            var apartmentResident = _context.ApartmentManagers
+            var apartmentResident = _context.ApartmentResidents
                 .Include(e => e.UserRoles)
                 .FirstOrDefault();
-            Console.WriteLine(apartmentResidentId);
             if(apartmentResident == null) {
                 throw new ArgumentException("apartman sakini bulunamadı");
             }
@@ -54,7 +53,22 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 userRole = apartmentResident.UserRoles.Role
             });
         }
+        [HttpGet("get-user-infos")]
+        public async Task<IActionResult> GetUserInfos() {
+            int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var apartmentResident = await _context.ApartmentResidents.FindAsync(apartmentResidentId);
+            if(apartmentResident == null) {
+                throw new ArgumentException("kat maliki bulunamadı.");
+            }
+            var apartmentResidentInfos = new ApartmentResidentDto {
+                Name = apartmentResident.Name,
+                Surname = apartmentResident.Surname,
+                PhoneNumber = apartmentResident.PhoneNumber,
+                Email = apartmentResident.Email
+            };
 
+            return Ok(apartmentResidentInfos);
+        }
         [HttpPut("update-resident-infos")]
         public async Task<IActionResult> UpdateInfos([FromBody] ApartmentResidentDto dto) {
             // input validation
@@ -73,14 +87,12 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             apartmentResident.Surname = dto.Surname;
             apartmentResident.PhoneNumber = dto.PhoneNumber;
             apartmentResident.Email = dto.Email;
+            if(!passwordHash.VerifyPassword(apartmentResident.Password, dto.Password!)) {
+                throw new ArgumentException("Eski şifre yanlış.");
+            }
+            //şifre guncellemesi
+            if(dto.NewPassword != null) {
 
-            if(dto.Password != null && dto.NewPassword != null && dto.NewPasswordAgain != null) {
-                if(dto.NewPassword != dto.NewPasswordAgain) {
-                    throw new ArgumentException("Yeni şifreler eşleşmiyor.");
-                }
-                if(!passwordHash.VerifyPassword(apartmentResident.Password, dto.Password)) {
-                    throw new ArgumentException("Eski şifre yanlış.");
-                }
                 apartmentResident.Password = passwordHash.HashPassword(dto.NewPassword);
             }
             await _context.SaveChangesAsync();
@@ -150,10 +162,31 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(mySpecialFees);
         }
         [HttpPost("create-payment-notification")]
-        public async Task<IActionResult> CreatePaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
+        public async Task<IActionResult> CreatePaymentNotification([FromForm] CreatePaymentNotificationDto dto) {
+            Console.WriteLine(dto.ReceiptFile);
+            string receiptUrl = string.Empty;
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            if(dto.ReceiptFile != null) {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+                var extension = Path.GetExtension(dto.ReceiptFile.FileName).ToLower();
+
+                if(!allowedExtensions.Contains(extension)) {
+                    throw new ArgumentException("İzin verilmeyen dosya türü.");
+                }
+                if(dto.ReceiptFile.Length > 5 * 1024 * 1024) {
+                    throw new ArgumentException("Dosya boyutu 5 MB'dan fazla olamaz.");
+                }
+                // virus total işlemi burada
+
+                if(!Directory.Exists(uploadsFolder)) {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+                int relatedId = dto.MaintenanceFeeId != 0 ? dto.MaintenanceFeeId : dto.SpecialFeeId;
+                string filePath = await fileHandler.GetFilePath(uploadsFolder, extension);
+                receiptUrl = $"/uploads/{filePath}";
+            }
             // ödeme bildirimi yapıldıktan sonra ödeme durumu beklemede olarak ayarlanacak
 
-            // burada ödeme yapıldıktan sonra dekont yükleme işlemi yapılabilir
             // input validation
             sanitizeAndValidate.IsValidNumber(dto.MaintenanceFeeId);
             sanitizeAndValidate.IsValidNumber(dto.SpecialFeeId);
@@ -193,7 +226,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     Amount = maintenanceFee.Amount,
                     DueDate = maintenanceFee.DueDate,
                     NotificationMessage = dto.NotificationMessage,
-                    ReceiptUrl = dto.ReceiptUrl,
+                    ReceiptUrl = receiptUrl,
                     // navigation properties
                     ResidentsSpecificFee = null, // çünkü bu bir aidat ödemesi
                     MaintenanceFee = maintenanceFee,
@@ -207,6 +240,8 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 _context.PaymentNotifications.Add(paymentNotification);
                 _context.MaintenanceFees.Update(maintenanceFee);
                 await _context.SaveChangesAsync();
+
+
                 successResult.Message = "aidat ödemesi için ödeme bildirimi oluşturuldu";
             }
             else if(dto.SpecialFeeId != 0) {
@@ -232,7 +267,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     Amount = specialFee.Amount,
                     DueDate = specialFee.DueDate,
                     NotificationMessage = dto.NotificationMessage,
-                    ReceiptUrl = dto.ReceiptUrl,
+                    ReceiptUrl = receiptUrl,
                     // navigation properties
                     ResidentsSpecificFee = specialFee,
                     MaintenanceFee = null, // çünkü bu bir özel ücret ödemesi
@@ -240,6 +275,9 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                     ApartmentResident = apartmentResident
 
                 };
+                specialFee.PaymentDate = DateTime.UtcNow;
+                specialFee.IsPaid = true;
+
                 _context.PaymentNotifications.Add(paymentNotification);
                 _context.ResidentsSpecificFees.Update(specialFee);
                 await _context.SaveChangesAsync();
@@ -248,11 +286,15 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             else {
                 throw new ArgumentException("Ödeme bildirimi oluşturulamadı. Lütfen geçerli bir aidat ya da özel ücret ID'si girin.");
             }
-
+            // olası hataların önüne geçmek için dosya kayıt işlemi en son
+            if(dto.ReceiptFile != null) {
+                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, receiptUrl);
+            }
             return Ok(successResult);
         }
-        [HttpPut("update-payment-notification")]
-        public async Task<IActionResult> UpdateMyPaymentNotification([FromBody] CreatePaymentNotificationDto dto) {
+        [HttpPost("update-payment-notification")]
+        public async Task<IActionResult> UpdateMyPaymentNotification([FromForm] CreatePaymentNotificationDto dto) {
+
             var paymentNotification = await _context.PaymentNotifications.FindAsync(dto.PaymentNotificationId);
             if(paymentNotification == null) {
                 throw new ArgumentException("Ödeme bildirimi bulunamadı.");
@@ -260,16 +302,36 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(paymentNotification.Status != PaymentStatus.Beklemede) {
                 throw new ArgumentException("Ödeme bildirimi zaten onaylandı ya da reddedildi.");
             }
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            if(!Directory.Exists(uploadsFolder)) {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+            // dosya kaydetme
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+            var extension = Path.GetExtension(dto.ReceiptFile.FileName).ToLower();
+            if(!allowedExtensions.Contains(extension)) {
+                throw new ArgumentException("İzin verilmeyen dosya türü.");
+            }
+            if(dto.ReceiptFile.Length > 5 * 1024 * 1024) {
+                throw new ArgumentException("Dosya boyutu 5 MB'dan fazla olamaz.");
+            }
+
+            string getFilePath = await fileHandler.GetFilePath(uploadsFolder, extension, dto.ReceiptUrl);
+
             paymentNotification.NotificationMessage = dto.NotificationMessage;
-            paymentNotification.ReceiptUrl = dto.ReceiptUrl;
+            paymentNotification.ReceiptUrl = getFilePath;
 
             _context.PaymentNotifications.Update(paymentNotification);
             await _context.SaveChangesAsync();
-
+            // veritabanı işleminden sonra dosyayı kaydetme
+            if(dto.ReceiptUrl != null) {
+                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, getFilePath);
+            }
             return Ok(new SuccessResult {
                 Message = "Ödeme bildirimi başarılı bir şekilde güncellendi."
             });
         }
+
         [HttpGet("get-my-payment-notifications")]
         public async Task<IActionResult> GetMyPaymentNotifications() {
             int apartmentResidentId = int.Parse(User.FindFirst("id")?.Value ?? "0");
@@ -277,7 +339,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             return Ok(myPaymentNotifications);
         }
 
-        
+
 
 
 

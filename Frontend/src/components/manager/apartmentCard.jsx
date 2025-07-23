@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import UpdateApartmentUnit from "./updateApartmentUnitForm"
+import UpdateApartmentUnit from "../manager/updateApartmentUnitForm"
 import SpecialFeeForm from "./specialFeeForm"
 const ApartmentCard = ({ onAction }) => {
   const [apartments, setApartments] = useState([])
@@ -8,7 +8,7 @@ const ApartmentCard = ({ onAction }) => {
   useEffect(() => {
     const getApartments = async () => {
       try {
-        const res = await fetch("http://localhost:5263/manager/getApartments", {
+        const res = await fetch("http://localhost:5263/manager/get-apartments", {
           method: "GET",
           credentials: "include",
         })

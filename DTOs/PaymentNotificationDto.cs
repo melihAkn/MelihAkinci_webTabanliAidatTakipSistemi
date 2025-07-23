@@ -2,10 +2,10 @@
 
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
     public class PaymentNotificationDto {
-        public required int paymentNotificationId { get; set; }
+        public required int NotificationId { get; set; }
         // apartman bilgileri
         public required string ApartmentName { get; set; }
-        public required string ApartmentAdress { get; set; } = string.Empty;
+        public required string ApartmentAddress { get; set; } = string.Empty;
 
         // kat malki bilgileri
         public required string ResidentName { get; set; } = string.Empty;

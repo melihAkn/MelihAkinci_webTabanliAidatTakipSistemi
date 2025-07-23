@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ allowedRole, fetchUrl, children }) => {
+  console.log("allowed rote", allowedRole)
+  console.log("fet rote", fetchUrl)
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
@@ -16,7 +18,7 @@ const ProtectedRoute = ({ allowedRole, fetchUrl, children }) => {
           setAuthorized(false);
         } else {
           const data = await res.json();
-          setAuthorized(data.userRole === allowedRole);
+          setAuthorized(data.userRole == allowedRole);
         }
       } catch {
         setAuthorized(false);

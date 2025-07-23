@@ -3,6 +3,6 @@
 namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
     public class AllowOrDenyPaymentNotificationDto {
         public int PaymentNotificationId { get; set; }
-        public required string Message { get; set; } = string.Empty; //ödeme reddedilirse bu alan dolu olmak zorunda
+        public string? Message { get; set; } = string.Empty; //ödeme reddedilirse bu alan dolu olmak zorunda
     }
 }

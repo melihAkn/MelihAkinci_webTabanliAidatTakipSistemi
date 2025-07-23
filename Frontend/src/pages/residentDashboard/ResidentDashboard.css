@@ -1,0 +1,42 @@
+/* Tüm uygulama alanı */
+#appContainer {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sol navigasyon */
+#sideStyleNavBar {
+    width: 25%;
+    max-width: 300px;
+    min-width: 200px;
+    background-color: #f0f0f0;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+}
+
+/* Sağ içerik paneli */
+#contentPanel {
+    width: 75%;
+    flex: 1;
+    /* Geriye kalan tüm alanı kaplar */
+    padding: 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+
+#sideStyleNavBar ul li {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+#sideStyleNavBar ul li:hover {
+  background-color: #ddd;
+}

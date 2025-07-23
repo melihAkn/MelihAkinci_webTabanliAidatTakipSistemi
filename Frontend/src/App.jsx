@@ -11,7 +11,7 @@ function App() {
       <Route
   path="/resident"
   element={
-    <ProtectedRoute allowedRole="ApartmenResident" fetchUrl="http://localhost:5263/resident/GetUserRole">
+    <ProtectedRoute allowedRole="ApartmentResident" fetchUrl="http://localhost:5263/resident/get-user-role">
       <ResidentDashboard />
     </ProtectedRoute>
   }
@@ -19,7 +19,7 @@ function App() {
       <Route
   path="/manager"
   element={
-    <ProtectedRoute allowedRole="ApartmentManager" fetchUrl="http://localhost:5263/manager/GetUserRole">
+    <ProtectedRoute allowedRole="ApartmentManager" fetchUrl="http://localhost:5263/manager/get-user-role">
       <ManagerDashboard />
     </ProtectedRoute>
   }
