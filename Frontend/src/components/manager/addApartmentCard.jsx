@@ -7,6 +7,7 @@ const AddApartmentCard = () => {
   const [fee, setFee] = useState('')
   const [floorCount, setFloorCount] = useState('')
   const [unitCountPerFloor, setUnitCountPerFloor] = useState('')
+  const [iban, setIban] = useState('')
   const [isWantedToAutoFillApartmentUnits, setIsWantedToAutoFillApartmentUnits] = useState(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,6 +19,7 @@ const AddApartmentCard = () => {
       maintenanceFeeAmount: parseFloat(fee),
       floorCount: parseInt(floorCount),
       apartmentUnitCountForEachFloor: parseInt(unitCountPerFloor),
+      iban,
       isWantedToAutoFillApartmentUnits
     }
 
@@ -53,13 +55,13 @@ const AddApartmentCard = () => {
         <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Apartman Adı" /><br />
 
         <label>Apartman da bulunabilecek en fazla kat maliki sayısı</label>
-        <input type="number" value={maxResidents} onChange={e => setMaxResidents(e.target.value)} placeholder="Kat Maliki Sayısı"/><br />
+        <input type="number" value={maxResidents} onChange={e => setMaxResidents(e.target.value)} placeholder="Kat Maliki Sayısı" /><br />
 
         <label>Apartman adresi</label>
         <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Apartman Adresi" /><br />
 
         <label>Apartman Aidatı</label>
-        <input type="number" value={fee} onChange={e => setFee(e.target.value)} placeholder="Aidat Tutarı"/><br />
+        <input type="number" value={fee} onChange={e => setFee(e.target.value)} placeholder="Aidat Tutarı" /><br />
 
         <label>Kat sayısı</label>
         <input type="number" value={floorCount} onChange={e => setFloorCount(e.target.value)} placeholder="Kat Sayısı" /><br />
@@ -67,14 +69,18 @@ const AddApartmentCard = () => {
         <label>Her katta bulunan daire sayısı</label>
         <input type="number" value={unitCountPerFloor} onChange={e => setUnitCountPerFloor(e.target.value)} placeholder="Daire Sayısı" /><br />
         <label>
-        <input
-          type="checkbox"
-          checked={isWantedToAutoFillApartmentUnits}
-          onChange={(e) => setIsWantedToAutoFillApartmentUnits(e.target.checked)}
-        />{' '}
-        Apartman daireleri otomatik olarak doldurulsun mu
-      </label>
-      <br />
+          <label>ödemeler için iban</label>
+          <input type="text" value={iban} onChange={e => setIban(e.target.value)} placeholder="iban" /><br />
+          <label></label>
+
+          <input
+            type="checkbox"
+            checked={isWantedToAutoFillApartmentUnits}
+            onChange={(e) => setIsWantedToAutoFillApartmentUnits(e.target.checked)}
+          />{' '}
+          Apartman daireleri otomatik olarak doldurulsun mu
+        </label>
+        <br />
         <button type="submit">Apartman Ekle</button>
       </form>
     </div>

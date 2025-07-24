@@ -10,6 +10,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.DTOs {
         public decimal MaintenanceFeeAmount { get; set; } = 0.0m;
         public required int FloorCount { get; set; }
         public required int ApartmentUnitCountForEachFloor { get; set; }
+        public required string Iban { get; set; } = string.Empty;
         public bool IsWantedToAutoFillApartmentUnits { get; set; } = false;
     }
 }

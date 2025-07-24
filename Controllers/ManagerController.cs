@@ -90,6 +90,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 Address = apartment.Address,
                 MaintenanceFeeAmount = apartment.MaintenanceFeeAmount,
                 FloorCount = apartment.FloorCount,
+                Iban = apartment.Iban,
                 ApartmentUnitCountForEachFloor = apartment.ApartmentUnitCountForEachFloor,
             })
             .ToListAsync();
@@ -215,6 +216,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 MaintenanceFeeAmount = dto.MaintenanceFeeAmount,
                 FloorCount = dto.FloorCount,
                 ApartmentUnitCountForEachFloor = dto.ApartmentUnitCountForEachFloor,
+                Iban = dto.Iban,
                 ApartmentManager = apartmentManager!
             };
             _context.Apartments.Add(apartment);
@@ -276,6 +278,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             apartment.MaxAmountOfResidents = dto.MaxAmountOfResidents;
             apartment.Address = dto.Address;
             apartment.MaintenanceFeeAmount = dto.MaintenanceFeeAmount;
+            apartment.Iban = dto.Iban;
             _context.Apartments.Update(apartment);
             await _context.SaveChangesAsync();
             return Ok("Apartman bilgileri güncellendi.");

@@ -86,7 +86,7 @@ const MyPaymentNotificationCard = ({ onAction }) => {
                         backgroundColor: "#f9f9f9",
                     }}
                 >
-                    <h4>{pymnt.maintenanceFee == null ? "özel ücret ödemesi" : "aidat ödemesi"}</h4>
+                    <h4>{pymnt.maintenanceFeeId == null ? "özel ücret ödemesi" : "aidat ödemesi"}</h4>
                     <p><strong>ödenen ücret:</strong> {pymnt.amount} ₺</p>
                     <p><strong>son ödeme tarihi:</strong> {pymnt.dueDate}</p>
                     <p><strong>ödenme durumu:</strong> {pymnt.status}</p>
@@ -95,7 +95,12 @@ const MyPaymentNotificationCard = ({ onAction }) => {
                         <p><strong>reddedilme sebebi:</strong> {pymnt.message}</p>
                     )}
                     <p><strong>ödenme tarihi:</strong> {pymnt.paymentDate}</p>
-                    <p><strong>dekont url:</strong> {pymnt.receiptUrl}</p>
+                      {pymnt.receiptUrl ? (
+                            <>
+                            <p><strong>dekont url:</strong> <a href={`http://localhost:5263/${pymnt.receiptUrl}`} target="_blank"> dekont</a></p>
+                            </>
+                        ) : (<p><strong>dekont url:</strong> dekont yuklenmemiş</p>)}
+
 
                     <div style={{ marginTop: "1rem" }}>
                         {pymnt.status == "Beklemede" && (

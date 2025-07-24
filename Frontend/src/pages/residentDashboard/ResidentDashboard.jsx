@@ -5,6 +5,7 @@ import UpdateResidentInfoCard from '../../components/resident/UpdateResidentInfo
 import MyPaymentNotificationsCard from '../../components/resident/MyPaymentNotifications'
 import MyMaintenanceFeesCard from '../../components/resident/myMaintenanceFeeCard'
 import MySpecialFeesCard from '../../components/resident/MySpecialFeeCard'
+import MyApartmentAndUnit from '../../components/resident/MyApartmentAndUnit'
 const ResidentDashboard = () => {
   const [cards, setCards] = useState([])
 
@@ -54,7 +55,11 @@ const ResidentDashboard = () => {
   }
 
   const apartmentAndUnitInfos = async () => {
-
+    try {
+      setCards([<MyApartmentAndUnit key="my-Apartment-Unit"  />])
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const myPaymentNotifications = async () => {

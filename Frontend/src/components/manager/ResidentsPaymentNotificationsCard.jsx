@@ -51,7 +51,11 @@ const MyPaymentNotifications = ({ onAction }) => {
           <p>ödeme tarihi: {paymentNotification.paymentDate}</p>
           <p>son ödeme tarihi: {paymentNotification.dueDate}</p>
           <p>ödeme durumu: {paymentNotification.status}</p>
-          <p>dekont resmi(henuz dahil edilmedi): {paymentNotification.receiptUrl}</p>
+          {paymentNotification.receiptUrl ? (
+                            <>
+                            <p>dekont url: <a href={`http://localhost:5263/${paymentNotification.receiptUrl}`} target="_blank"> dekont</a></p>
+                            </>
+                        ) : (<p>dekont url: dekont yuklenmemiş</p>)}
 
           <p><strong>kat maliki bilgileri</strong></p>
           <p>kat maliki mesajı: {paymentNotification.notificationMessage}</p>

@@ -24,8 +24,8 @@ const LoginPage = () => {
         },
         credentials: "include",
         body: JSON.stringify({ 
-            "username" : ResidentUsername,
-            "password" : ResidentPassword })
+            "username" : managerUsername,
+            "password" : managerPassword })
       })
 
       if (!res.ok) {

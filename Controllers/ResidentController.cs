@@ -5,6 +5,7 @@ using MelihAkıncı_webTabanliAidatTakipSistemi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
 using static MelihAkıncı_webTabanliAidatTakipSistemi.classes.PaymentStatusEnum;
 
@@ -107,7 +108,22 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(apartmentResident == null) {
                 throw new ArgumentException("apartman sakini bulunamadı");
             }
-            var residentApartmentUnit = await _context.ApartmentUnits.FindAsync(apartmentResident.ApartmentUnitId);
+            var residentApartmentUnit = await _context.ApartmentUnits
+                .Include(x => x.Apartment)
+                .Include(x => x.Apartment.ApartmentManager)
+                .Select(apartmentUnit => new ResidentApartmentUnitDto {
+                    Id = apartmentUnit.Id,
+                    FloorNumber = apartmentUnit.FloorNumber,
+                    ApartmentNumber = apartmentUnit.ApartmentNumber,
+                    ApartmentType = apartmentUnit.ApartmentType,
+                    SquareMeters = apartmentUnit.SquareMeters,
+                    Address = apartmentUnit.Apartment.Address,
+                    MaintenanceFeeAmount = apartmentUnit.Apartment.MaintenanceFeeAmount,
+                    Iban = apartmentUnit.Apartment.Iban,
+                    ManagerNameAndSurname = apartmentUnit.Apartment.ApartmentManager.Name + " " + apartmentUnit.Apartment.ApartmentManager.Surname,
+                    ApartmentName = apartmentUnit.Apartment.Name
+                })
+                .FirstOrDefaultAsync(x => x.Id == apartmentResident.ApartmentUnitId);
 
             if(apartmentResident == null) {
                 throw new ArgumentException("Apartman sakini bulunamadı.");
@@ -165,6 +181,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         public async Task<IActionResult> CreatePaymentNotification([FromForm] CreatePaymentNotificationDto dto) {
             Console.WriteLine(dto.ReceiptFile);
             string receiptUrl = string.Empty;
+            string fileName = string.Empty;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
             if(dto.ReceiptFile != null) {
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
@@ -181,9 +198,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 if(!Directory.Exists(uploadsFolder)) {
                     Directory.CreateDirectory(uploadsFolder);
                 }
-                int relatedId = dto.MaintenanceFeeId != 0 ? dto.MaintenanceFeeId : dto.SpecialFeeId;
-                string filePath = await fileHandler.GetFilePath(uploadsFolder, extension);
-                receiptUrl = $"/uploads/{filePath}";
+                fileName = $"{Guid.NewGuid()}{extension}";
+                receiptUrl = $"/uploads/{fileName}";
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(receiptUrl);
+                Console.WriteLine(fileName);
+                Console.ResetColor();
+
             }
             // ödeme bildirimi yapıldıktan sonra ödeme durumu beklemede olarak ayarlanacak
 
@@ -288,7 +309,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             }
             // olası hataların önüne geçmek için dosya kayıt işlemi en son
             if(dto.ReceiptFile != null) {
-                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, receiptUrl);
+                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, fileName);
             }
             return Ok(successResult);
         }
@@ -315,17 +336,25 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             if(dto.ReceiptFile.Length > 5 * 1024 * 1024) {
                 throw new ArgumentException("Dosya boyutu 5 MB'dan fazla olamaz.");
             }
-
-            string getFilePath = await fileHandler.GetFilePath(uploadsFolder, extension, dto.ReceiptUrl);
-
             paymentNotification.NotificationMessage = dto.NotificationMessage;
-            paymentNotification.ReceiptUrl = getFilePath;
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(dto.ReceiptUrl);
+            Console.ResetColor();
 
             _context.PaymentNotifications.Update(paymentNotification);
             await _context.SaveChangesAsync();
             // veritabanı işleminden sonra dosyayı kaydetme
-            if(dto.ReceiptUrl != null) {
-                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, getFilePath);
+            if(paymentNotification.ReceiptUrl.IsNullOrEmpty()) {
+                // eğer veritabanın da dekont url yoksa yeni bir benzersiz dosya adı oluştur ve veritabanına kaydet
+                string newFilePath = $"{Guid.NewGuid()}{extension}";
+                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, newFilePath);
+                paymentNotification.ReceiptUrl = $"/uploads/{newFilePath}";
+                await _context.SaveChangesAsync();
+            }
+            else {
+                // eğer veritabanın da zaten dekont url alanı varsa yani doluysa üstüne yaz herhangi bir değişiklik yapma
+                await fileHandler.SaveFile(dto.ReceiptFile!, uploadsFolder, paymentNotification.ReceiptUrl!.Substring(9));
             }
             return Ok(new SuccessResult {
                 Message = "Ödeme bildirimi başarılı bir şekilde güncellendi."
