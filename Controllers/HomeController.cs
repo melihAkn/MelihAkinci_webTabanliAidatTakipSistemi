@@ -45,7 +45,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             dto.Email = dto.Email.Trim();
             dto.Username = dto.Username.Trim();
             dto.Password = dto.Password.Trim();
-            dto.Email = dto.Email.Trim();
             dto.Username = dto.Username.Trim();
             dto.Password = dto.Password.Trim();
 
@@ -72,7 +71,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             _context.ApartmentManagers.Add(apartmentManager);
             await _context.SaveChangesAsync();
 
-            return Content("Kayıt Başarılı!");
+            return Ok(new SuccessResult { Message = "kayit basarili"});
         }
 
 

@@ -34,9 +34,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * dekont yükleme ödeme yaptıktan sonra ödemeler panelin de dekont yükle butonu olmalı /  post 
         */
 
-        public IActionResult Index() {
-            return View();
-        }
 
         [HttpGet("get-user-role")]
         public IActionResult GetUserRoleId() {

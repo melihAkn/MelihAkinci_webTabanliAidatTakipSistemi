@@ -38,9 +38,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
          * gelen ödemeleri reddetme ve onaylama / post -------------------------------------------------- done
          */
 
-        public IActionResult Index() {
-            return Ok("rota çalışıyor");
-        }
 
         [HttpGet("get-user-role")]
         public IActionResult GetUserRole() {

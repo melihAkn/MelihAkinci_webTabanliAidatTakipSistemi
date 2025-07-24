@@ -7,6 +7,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
         // burada dto kullanılabilir
         public Boolean SendEmail(string targetMailAddress, string mailSubject, string mailBody) {
             try {
+                if(Env.GetString("email_credential_password") == string.Empty) {
+                    // geliştirme ortamı için eğer app password tanımlı değilse devre dışı bıraktım.
+                    // bu şekilde mail gönderildi olarak simule edilmiş olur.
+                    return true;
+                }
                 using(var client = new SmtpClient()) {
                     client.Host = Env.GetString("EMAIL_HOST");
                     client.Port = Env.GetInt("EMAIL_PORT");

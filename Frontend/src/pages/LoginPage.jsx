@@ -6,10 +6,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState()
   const navigate = useNavigate()
-    const managerUsername = "melihaeeekinci"
-    const managerPassword = "deneme123456"
-    const ResidentUsername = "mehmet.kut8752"
-    const ResidentPassword = "deneme123"
   const handleLogin = async () => {
     const endpoint =
   role === "apartmentManager"
@@ -24,8 +20,8 @@ const LoginPage = () => {
         },
         credentials: "include",
         body: JSON.stringify({ 
-            "username" : managerUsername,
-            "password" : managerPassword })
+            "username" : username,
+            "password" : password })
       })
 
       if (!res.ok) {

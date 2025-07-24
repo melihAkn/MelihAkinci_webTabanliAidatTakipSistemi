@@ -25,9 +25,6 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         public AuthController(AppDbContext context) {
             _context = context;
         }
-        public IActionResult Index() {
-            return Content("auth coroller çalışıyor.");
-        }
         [HttpPost("manager/login")]
         public async Task<IActionResult> ManagerLogin([FromBody] LoginDto dto) {
             //tum değerlerin doldurulması zorunlu
