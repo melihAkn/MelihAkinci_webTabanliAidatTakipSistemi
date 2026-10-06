@@ -20,7 +20,9 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
         /// <param name="minLength"> </param>
         /// <returns> bool </returns>
         public bool IsValidText(string text, int minLength = 2, int maxLength = 50) {
-            if(string.IsNullOrWhiteSpace(text)) {
+            // her seferinde yeni değer eklemek zorudna olmak mantıksız burada.
+            string[] allowedTextInputs = { "1+1" , "2+1", "3+1", "4+1", "5+1" };
+            if (string.IsNullOrWhiteSpace(text)) {
                 throw new ArgumentException("boş ya da geçersiz metin");
             }
             // sanitize the text
@@ -29,7 +31,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
                 throw new ArgumentException($"metin uzunluğu {minLength} ile {maxLength} arasında olmalıdır");
             }
             var regex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9\s]+$");
-            if(!regex.IsMatch(text)) {
+            if(!regex.IsMatch(text) && !allowedTextInputs.Contains(text)) {
                 throw new ArgumentException("metin sadece harf, rakam ve boşluk içerebilir");
             }
             return true;

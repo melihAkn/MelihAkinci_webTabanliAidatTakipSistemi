@@ -68,6 +68,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
                 UserRoles = role
             };
 
+            // daha önce kayıt olunmuş mu kontrol
+            var existingManager = await _context.ApartmentManagers.FindAsync(apartmentManager.Email);
+            if(existingManager != null) {
+                return BadRequest(new { code = 409, Message = "Bu e-posta adresiyle bir kullanıcı zaten kayıtlı." });
+            }
             _context.ApartmentManagers.Add(apartmentManager);
             await _context.SaveChangesAsync();
 
