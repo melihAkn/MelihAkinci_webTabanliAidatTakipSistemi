@@ -285,19 +285,13 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
         [HttpPost("add-an-apartment-unit")]
         public async Task<IActionResult> AddApartmentUnit([FromBody] ApartmentUnitDto dto) {
             // input validator
-            string[] allowedTextInputs = { "1+1", "2+1", "3+1", "4+1", "5+1" };
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
             sanitizeAndValidate.IsValidNumber(dto.FloorNumber);
             sanitizeAndValidate.IsValidNumber(dto.ApartmentNumber);
             sanitizeAndValidate.IsValidNumber(dto.SquareMeters);
-            
-            if(!allowedTextInputs.Contains(dto.ApartmentType))
+            if (!sanitizeAndValidate.allowedTextInputs.Contains(dto.ApartmentType))
             {
                 throw new ArgumentException("Geçersiz daire tipi. Geçerli tipler: 1+1, 2+1, 3+1, 4+1, 5+1");
-            }
-            else
-            {
-                sanitizeAndValidate.IsValidText(dto.ApartmentType);
             }
 
             // apartman da ki kat sayısı ve daire sayısı kontrol edilip ona göre eklenmeli
@@ -332,7 +326,11 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.Controllers {
             sanitizeAndValidate.IsValidNumber(dto.ApartmentId);
             sanitizeAndValidate.IsValidNumber(dto.FloorNumber);
             sanitizeAndValidate.IsValidNumber(dto.ApartmentNumber);
-            sanitizeAndValidate.IsValidText(dto.ApartmentType);
+
+            if (!sanitizeAndValidate.allowedTextInputs.Contains(dto.ApartmentType))
+            {
+                throw new ArgumentException("Geçersiz daire tipi. Geçerli tipler: 1+1, 2+1, 3+1, 4+1, 5+1");
+            }
             sanitizeAndValidate.IsValidNumber(dto.SquareMeters);
             sanitizeAndValidate.IsValidNumber(dto.ApartmentUnitId);
             // apartmentUnitId ile daireyi bulma işlemi

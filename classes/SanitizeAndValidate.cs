@@ -12,6 +12,7 @@ namespace MelihAkıncı_webTabanliAidatTakipSistemi.classes {
             }
         }
         readonly InputSanitizer inputSanitizer = new InputSanitizer();
+        public string[] allowedTextInputs = { "1+1", "2+1", "3+1", "4+1", "5+1" };
         /// <summary>
         /// it waits for string input and checks if it valid length and do the regex validation
         /// </summary>
